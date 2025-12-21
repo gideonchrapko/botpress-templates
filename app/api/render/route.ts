@@ -61,10 +61,18 @@ export async function POST(req: NextRequest) {
         height: `${dimensions.height}px`,
         printBackground: true,
       });
+    } else if (submission.format === "webp") {
+      // Playwright doesn't support webp in screenshot type, save as png
+      // The file will be served with webp extension but actual format is png
+      await page.screenshot({
+        path: filepath,
+        type: "png",
+        fullPage: true,
+      });
     } else {
       await page.screenshot({
         path: filepath,
-        type: submission.format as "png" | "jpeg" | "webp",
+        type: submission.format === "jpg" ? "jpeg" : "png",
         fullPage: true,
       });
     }
@@ -78,6 +86,8 @@ export async function POST(req: NextRequest) {
         ? "application/pdf"
         : submission.format === "jpg"
         ? "image/jpeg"
+        : submission.format === "webp"
+        ? "image/png" // Saved as PNG but with webp extension
         : `image/${submission.format}`;
 
     await prisma.submission.update({
