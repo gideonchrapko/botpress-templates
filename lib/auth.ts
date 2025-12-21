@@ -1,10 +1,9 @@
 import { PrismaAdapter } from "@auth/prisma-adapter";
-import { NextAuthOptions } from "next-auth";
 import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import { prisma } from "@/lib/prisma";
 
-export const authOptions: NextAuthOptions = {
+export const authOptions = {
   adapter: PrismaAdapter(prisma) as any,
   providers: [
     GoogleProvider({
@@ -13,7 +12,7 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async signIn({ user, account, profile }) {
+    async signIn({ user, account, profile }: any) {
       // Only allow verified emails from @botpress.com
       if (
         user.email &&
@@ -24,7 +23,7 @@ export const authOptions: NextAuthOptions = {
       }
       return false;
     },
-    async session({ session, user }) {
+    async session({ session, user }: any) {
       if (session.user) {
         session.user.id = user.id;
       }
@@ -35,7 +34,7 @@ export const authOptions: NextAuthOptions = {
     signIn: "/",
   },
   session: {
-    strategy: "database",
+    strategy: "database" as const,
   },
 };
 
