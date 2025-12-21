@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { lightenColor } from "@/lib/utils";
 import { writeFile, mkdir } from "fs/promises";
@@ -9,7 +8,7 @@ import { existsSync } from "fs";
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     if (!session?.user?.email || !session.user.email.endsWith("@botpress.com")) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

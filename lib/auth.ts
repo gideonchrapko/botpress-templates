@@ -1,5 +1,6 @@
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { NextAuthOptions } from "next-auth";
+import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import { prisma } from "@/lib/prisma";
 
@@ -37,4 +38,7 @@ export const authOptions: NextAuthOptions = {
     strategy: "database",
   },
 };
+
+// Create and export the auth instance for use in middleware and server components
+export const { handlers, auth } = NextAuth(authOptions);
 
