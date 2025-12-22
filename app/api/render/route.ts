@@ -47,8 +47,10 @@ export async function POST(req: NextRequest) {
     // Load HTML
     await page.setContent(html, { waitUntil: "networkidle" });
 
-    // Create output directory
-    const outputDir = join(process.cwd(), "storage", "outputs");
+    // Use /tmp in production (Vercel), storage/outputs in local dev
+    const outputDir = process.env.VERCEL
+      ? join("/tmp", "storage", "outputs")
+      : join(process.cwd(), "storage", "outputs");
     if (!existsSync(outputDir)) {
       await mkdir(outputDir, { recursive: true });
     }

@@ -2,9 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { lightenColor } from "@/lib/utils";
-import { writeFile, mkdir } from "fs/promises";
-import { join } from "path";
-import { existsSync } from "fs";
 
 export async function POST(req: NextRequest) {
   try {
@@ -35,12 +32,6 @@ export async function POST(req: NextRequest) {
     const people = [];
     const uploadUrls = [];
 
-    // Create storage directory if it doesn't exist
-    const storageDir = join(process.cwd(), "storage", "uploads");
-    if (!existsSync(storageDir)) {
-      await mkdir(storageDir, { recursive: true });
-    }
-
     // Process each person
     for (let i = 0; i < peopleCountNum; i++) {
       const headshot = formData.get(`headshot_${i}`) as File;
@@ -55,21 +46,26 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      // Save headshot file
+      // Convert headshot to base64 for storage (works in both local and Vercel)
       const bytes = await headshot.arrayBuffer();
       const buffer = Buffer.from(bytes);
-      const filename = `${Date.now()}_${i}_${headshot.name}`;
-      const filepath = join(storageDir, filename);
-      await writeFile(filepath, buffer);
+      const ext = headshot.name.split(".").pop()?.toLowerCase();
+      let mimeType = "image/png";
+      if (ext === "jpg" || ext === "jpeg") mimeType = "image/jpeg";
+      else if (ext === "png") mimeType = "image/png";
+      else if (ext === "webp") mimeType = "image/webp";
+      const base64 = buffer.toString("base64");
+      const headshotDataUri = `data:${mimeType};base64,${base64}`;
 
-      const uploadUrl = `/storage/uploads/${filename}`;
+      // Store as data URI instead of file path (works in serverless)
+      const uploadUrl = headshotDataUri;
       uploadUrls.push(uploadUrl);
 
       people.push({
         name,
         role,
         talkTitle,
-        headshotUrl: uploadUrl,
+        headshotUrl: uploadUrl, // Now contains base64 data URI
       });
     }
 
@@ -109,8 +105,12 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json({ submissionId: submission.id });
-  } catch {
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  } catch (error) {
+    console.error("Submit error:", error);
+    return NextResponse.json(
+      { error: "Internal server error", details: error instanceof Error ? error.message : String(error) },
+      { status: 500 }
+    );
   }
 }
 

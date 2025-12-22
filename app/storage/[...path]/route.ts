@@ -15,7 +15,10 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const filePath = join(process.cwd(), "storage", ...path);
+    // Use /tmp in production (Vercel), storage in local dev
+    const filePath = process.env.VERCEL
+      ? join("/tmp", "storage", ...path)
+      : join(process.cwd(), "storage", ...path);
     
     if (!existsSync(filePath)) {
       return NextResponse.json({ error: "File not found" }, { status: 404 });

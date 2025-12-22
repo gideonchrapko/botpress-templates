@@ -174,10 +174,17 @@ export async function renderTemplate(submission: Submission): Promise<string> {
     ];
     replaceFirst(talkTitlePatterns, person.talkTitle);
     
-    // Convert headshot URL to base64 data URI for Playwright
+    // Headshot is already a base64 data URI (stored directly in database)
     let headshotDataUri: string | null = null;
-    if (person.headshotUrl.startsWith("/storage/")) {
-      const filePath = join(process.cwd(), person.headshotUrl);
+    if (person.headshotUrl && person.headshotUrl.startsWith("data:")) {
+      // Already a data URI, use directly
+      headshotDataUri = person.headshotUrl;
+    } else if (person.headshotUrl.startsWith("/storage/")) {
+      // Fallback: try to read from file system (for backwards compatibility)
+      const storagePath = person.headshotUrl.replace("/storage/", "");
+      const filePath = process.env.VERCEL
+        ? join("/tmp", "storage", storagePath)
+        : join(process.cwd(), person.headshotUrl);
       headshotDataUri = await fileToDataUri(filePath);
     }
 
