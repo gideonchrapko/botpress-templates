@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DatePicker } from "@/components/DatePicker";
-import { lightenColor } from "@/lib/utils";
+import { X } from "lucide-react";
 
 export default function LinkedinForm() {
   const router = useRouter();
@@ -34,44 +34,34 @@ export default function LinkedinForm() {
     resolver: zodResolver(linkedinFormSchema),
     defaultValues: {
       primaryColor: "#3D9DFF",
-      peopleCount: "1",
       scale: "1",
-      format: "png",
+      formats: ["png"], // Default to PNG
+      doorTime: "18:00", // Default to 6:00 PM in 24-hour format
       people: [{ name: "", role: "", talkTitle: "", headshot: undefined as any }],
     },
   });
 
-  const peopleCount = watch("peopleCount");
   const { fields, append, remove } = useFieldArray({
     control,
     name: "people",
   });
 
-  // Sync fields array with peopleCount
-  const currentPeopleCount = parseInt(peopleCount || "1");
-  if (fields.length < currentPeopleCount) {
-    for (let i = fields.length; i < currentPeopleCount; i++) {
-      append({ name: "", role: "", talkTitle: "", headshot: undefined as any });
-    }
-  } else if (fields.length > currentPeopleCount) {
-    for (let i = fields.length; i > currentPeopleCount; i--) {
-      remove(i - 1);
-    }
-  }
+  const canAddPerson = fields.length < 3;
 
   const onSubmit = async (data: LinkedinFormData) => {
     setIsSubmitting(true);
     try {
       const formData = new FormData();
       formData.append("primaryColor", data.primaryColor);
-      formData.append("peopleCount", data.peopleCount);
+      formData.append("peopleCount", data.people.length.toString());
       formData.append("scale", data.scale);
-      formData.append("format", data.format);
+      // Append each format
+      data.formats.forEach((format) => {
+        formData.append("formats", format);
+      });
       formData.append("eventTitle", data.eventTitle);
-      formData.append("venueName", data.venueName);
-      formData.append("addressLine", data.addressLine);
-      formData.append("cityLine", data.cityLine);
       formData.append("eventDate", data.eventDate.toISOString());
+      formData.append("doorTime", data.doorTime);
 
       // Append headshots
       data.people.forEach((person, index) => {
@@ -92,8 +82,7 @@ export default function LinkedinForm() {
 
       const result = await response.json();
       router.push(`/results/${result.submissionId}`);
-    } catch (error) {
-      console.error("Error submitting form:", error);
+    } catch {
       alert("Failed to submit. Please try again.");
     } finally {
       setIsSubmitting(false);
@@ -114,12 +103,14 @@ export default function LinkedinForm() {
               <Input
                 id="primaryColor"
                 type="color"
-                {...register("primaryColor")}
+                value={watch("primaryColor")}
+                onChange={(e) => setValue("primaryColor", e.target.value, { shouldValidate: true })}
                 className="w-24 h-10"
               />
               <Input
                 type="text"
-                {...register("primaryColor")}
+                value={watch("primaryColor")}
+                onChange={(e) => setValue("primaryColor", e.target.value, { shouldValidate: true })}
                 placeholder="#3D9DFF"
                 className="flex-1"
               />
@@ -133,34 +124,12 @@ export default function LinkedinForm() {
         </CardContent>
       </Card>
 
-      {/* People Count & Output Settings */}
+      {/* Output Settings */}
       <Card>
         <CardHeader>
           <CardTitle>Settings</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div>
-            <Label htmlFor="peopleCount">Number of People</Label>
-            <Select
-              value={watch("peopleCount")}
-              onValueChange={(value) => setValue("peopleCount", value as "1" | "2" | "3")}
-            >
-              <SelectTrigger id="peopleCount">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="1">1 Person</SelectItem>
-                <SelectItem value="2">2 People</SelectItem>
-                <SelectItem value="3">3 People</SelectItem>
-              </SelectContent>
-            </Select>
-            {errors.peopleCount && (
-              <p className="text-sm text-destructive mt-1">
-                {errors.peopleCount.message}
-              </p>
-            )}
-          </div>
-
           <div>
             <Label htmlFor="scale">Poster Scale</Label>
             <Select
@@ -184,24 +153,36 @@ export default function LinkedinForm() {
           </div>
 
           <div>
-            <Label htmlFor="format">Output Format</Label>
-            <Select
-              value={watch("format")}
-              onValueChange={(value) => setValue("format", value as "png" | "jpg" | "webp" | "pdf")}
-            >
-              <SelectTrigger id="format">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="png">PNG</SelectItem>
-                <SelectItem value="jpg">JPG</SelectItem>
-                <SelectItem value="webp">WebP</SelectItem>
-                <SelectItem value="pdf">PDF</SelectItem>
-              </SelectContent>
-            </Select>
-            {errors.format && (
+            <Label>Output Formats</Label>
+            <div className="flex flex-wrap gap-4 mt-2">
+              {(["png", "jpg", "webp", "pdf"] as const).map((format) => (
+                <div key={format} className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id={`format-${format}`}
+                    checked={watch("formats").includes(format)}
+                    onChange={(e) => {
+                      const currentFormats = watch("formats");
+                      if (e.target.checked) {
+                        setValue("formats", [...currentFormats, format], { shouldValidate: true });
+                      } else {
+                        setValue("formats", currentFormats.filter((f) => f !== format), { shouldValidate: true });
+                      }
+                    }}
+                    className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                  />
+                  <Label
+                    htmlFor={`format-${format}`}
+                    className="text-sm font-normal cursor-pointer"
+                  >
+                    {format.toUpperCase()}
+                  </Label>
+                </div>
+              ))}
+            </div>
+            {errors.formats && (
               <p className="text-sm text-destructive mt-1">
-                {errors.format.message}
+                {errors.formats.message}
               </p>
             )}
           </div>
@@ -230,51 +211,6 @@ export default function LinkedinForm() {
           </div>
 
           <div>
-            <Label htmlFor="venueName">Venue Name</Label>
-            <Input
-              id="venueName"
-              {...register("venueName")}
-              placeholder="Botpress HQ"
-              maxLength={60}
-            />
-            {errors.venueName && (
-              <p className="text-sm text-destructive mt-1">
-                {errors.venueName.message}
-              </p>
-            )}
-          </div>
-
-          <div>
-            <Label htmlFor="addressLine">Address</Label>
-            <Input
-              id="addressLine"
-              {...register("addressLine")}
-              placeholder="400 Blvd. De Maisonneuve Ouest"
-              maxLength={80}
-            />
-            {errors.addressLine && (
-              <p className="text-sm text-destructive mt-1">
-                {errors.addressLine.message}
-              </p>
-            )}
-          </div>
-
-          <div>
-            <Label htmlFor="cityLine">City & Postal Code</Label>
-            <Input
-              id="cityLine"
-              {...register("cityLine")}
-              placeholder="Montreal, QC  H3A 1L4"
-              maxLength={40}
-            />
-            {errors.cityLine && (
-              <p className="text-sm text-destructive mt-1">
-                {errors.cityLine.message}
-              </p>
-            )}
-          </div>
-
-          <div>
             <Label htmlFor="eventDate">Event Date</Label>
             <DatePicker
               value={watch("eventDate")}
@@ -287,17 +223,56 @@ export default function LinkedinForm() {
               </p>
             )}
           </div>
+
+          <div>
+            <Label htmlFor="doorTime">Door Opening Time</Label>
+            <Input
+              id="doorTime"
+              type="time"
+              value={watch("doorTime")}
+              onChange={(e) => setValue("doorTime", e.target.value, { shouldValidate: true })}
+            />
+            {errors.doorTime && (
+              <p className="text-sm text-destructive mt-1">
+                {errors.doorTime.message}
+              </p>
+            )}
+          </div>
         </CardContent>
       </Card>
 
       {/* People Blocks */}
-      <div className="space-y-4">
-        {fields.map((field, index) => (
-          <Card key={field.id}>
-            <CardHeader>
-              <CardTitle>Person {index + 1}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>People</CardTitle>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => append({ name: "", role: "", talkTitle: "", headshot: undefined as any })}
+            disabled={!canAddPerson}
+          >
+            Add Person
+          </Button>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {fields.map((field, index) => (
+            <Card key={field.id} className="relative">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-lg">Person {index + 1}</CardTitle>
+                {fields.length > 1 && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => remove(index)}
+                    className="h-8 w-8 p-0"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
+              </CardHeader>
+              <CardContent className="space-y-4">
               <div>
                 <Label htmlFor={`people.${index}.name`}>Name</Label>
                 <Input
@@ -362,10 +337,16 @@ export default function LinkedinForm() {
                   </p>
                 )}
               </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+              </CardContent>
+            </Card>
+          ))}
+          {fields.length === 0 && (
+            <p className="text-sm text-muted-foreground text-center py-4">
+              No people added. Click "Add Person" to get started.
+            </p>
+          )}
+        </CardContent>
+      </Card>
 
       <div className="flex gap-4">
         <Button type="submit" disabled={isSubmitting} size="lg">

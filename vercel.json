@@ -1,4 +1,9 @@
 {
-  "framework": "nextjs"
+  "framework": "nextjs",
+  "functions": {
+    "app/api/render/route.ts": {
+      "maxDuration": 60
+    }
+  }
 }
 

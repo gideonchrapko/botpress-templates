@@ -36,12 +36,8 @@ export async function GET(
         "Content-Disposition": `inline; filename="${filePath.split("/").pop()}"`,
       },
     });
-  } catch (error) {
-    console.error("Error serving file:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+  } catch {
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
 

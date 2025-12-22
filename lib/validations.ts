@@ -4,14 +4,12 @@ export const linkedinFormSchema = z.object({
   primaryColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Must be a valid hex color"),
   peopleCount: z.enum(["1", "2", "3"]),
   scale: z.enum(["1", "2", "3"]),
-  format: z.enum(["png", "jpg", "webp", "pdf"]),
+  formats: z.array(z.enum(["png", "jpg", "webp", "pdf"])).min(1, "At least one format must be selected"),
   eventTitle: z.string().min(1, "Required").max(60, "Max 60 characters").trim(),
-  venueName: z.string().min(1, "Required").max(60, "Max 60 characters").trim(),
-  addressLine: z.string().min(1, "Required").max(80, "Max 80 characters").trim(),
-  cityLine: z.string().min(1, "Required").max(40, "Max 40 characters").trim(),
   eventDate: z.date({
     required_error: "Event date is required",
   }),
+  doorTime: z.string().min(1, "Door time is required").regex(/^([01][0-9]|2[0-3]):[0-5][0-9]$/, "Must be a valid time (HH:MM format)"),
   people: z.array(
     z.object({
       name: z.string().min(1, "Required").max(40, "Max 40 characters").trim(),

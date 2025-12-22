@@ -13,13 +13,13 @@ export default function TemplatesPage() {
       </div>
       
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <Link href="/templates/linkedin/create">
+        <Link href="/templates/mtl-code/create">
           <Card className="cursor-pointer hover:shadow-lg transition-shadow">
             <CardHeader>
               <FileText className="h-8 w-8 mb-2" />
-              <CardTitle>LinkedIn Poster</CardTitle>
+              <CardTitle>MTL Code Event Poster</CardTitle>
               <CardDescription>
-                Create professional LinkedIn event posters with speaker information
+                Generate a linkedin/instagram poster for MTL Code 1350x1080
               </CardDescription>
             </CardHeader>
             <CardContent>

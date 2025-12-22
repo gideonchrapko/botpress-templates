@@ -38,10 +38,14 @@ export default async function ResultsPage({
     );
   }
 
-  const isImage = submission.format !== "pdf";
-  const previewUrl = submission.outputUrl
-    ? `${process.env.NEXTAUTH_URL || "http://localhost:3000"}${submission.outputUrl}`
-    : null;
+  // Parse outputs from JSON
+  const outputs = submission.outputs ? (JSON.parse(submission.outputs) as Array<{ url: string; format: string; mimeType: string }>) : null;
+  const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
+  
+  // Get first image output for preview (prefer PNG, then JPG, then WebP)
+  const previewOutput = outputs?.find((o) => o.format !== "pdf") || outputs?.[0];
+  const previewUrl = previewOutput ? `${baseUrl}${previewOutput.url}` : null;
+  const isPreviewImage = previewOutput?.format !== "pdf";
 
   return (
     <div className="container mx-auto py-8 max-w-4xl">
@@ -57,33 +61,45 @@ export default async function ResultsPage({
           <CardTitle>Preview</CardTitle>
         </CardHeader>
         <CardContent>
-          {submission.outputUrl ? (
+          {outputs && outputs.length > 0 ? (
             <div className="space-y-4">
-              {isImage ? (
+              {isPreviewImage && previewUrl ? (
                 <img
-                  src={previewUrl!}
+                  src={previewUrl}
                   alt="Generated poster"
                   className="w-full border rounded-lg"
                 />
-              ) : (
+              ) : previewOutput ? (
                 <div className="border rounded-lg p-8 text-center">
                   <p className="mb-4">PDF generated successfully</p>
-                  <a href={previewUrl!} download>
+                  <a href={`${baseUrl}${previewOutput.url}`} download>
                     <Button>
                       <Download className="mr-2 h-4 w-4" />
                       Download PDF
                     </Button>
                   </a>
                 </div>
-              )}
+              ) : null}
 
-              <div className="flex gap-4">
-                <a href={previewUrl!} download>
-                  <Button>
-                    <Download className="mr-2 h-4 w-4" />
-                    Download {submission.format.toUpperCase()}
-                  </Button>
-                </a>
+              <div className="space-y-2">
+                <h3 className="font-semibold">Download Formats</h3>
+                <div className="flex flex-wrap gap-2">
+                  {outputs.map((output) => (
+                    <a
+                      key={output.format}
+                      href={`${baseUrl}${output.url}`}
+                      download
+                    >
+                      <Button variant="outline">
+                        <Download className="mr-2 h-4 w-4" />
+                        Download {output.format.toUpperCase()}
+                      </Button>
+                    </a>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex gap-4 pt-4">
                 <Link href="/templates">
                   <Button variant="outline">Back to Templates</Button>
                 </Link>

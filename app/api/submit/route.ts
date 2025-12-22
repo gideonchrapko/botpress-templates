@@ -17,12 +17,19 @@ export async function POST(req: NextRequest) {
     const primaryColor = formData.get("primaryColor") as string;
     const peopleCount = formData.get("peopleCount") as string;
     const scale = parseInt(formData.get("scale") as string);
-    const format = formData.get("format") as string;
+    // Get all formats from form data
+    const formats = formData.getAll("formats") as string[];
+    if (!formats || formats.length === 0) {
+      return NextResponse.json({ error: "At least one format must be selected" }, { status: 400 });
+    }
     const eventTitle = formData.get("eventTitle") as string;
-    const venueName = formData.get("venueName") as string;
-    const addressLine = formData.get("addressLine") as string;
-    const cityLine = formData.get("cityLine") as string;
     const eventDate = new Date(formData.get("eventDate") as string);
+    
+    // Hardcoded location values (matching template)
+    const venueName = "Botpress HQ";
+    const addressLine = "400 Blvd. De Maisonneuve Ouest";
+    const cityLine = "Montreal, QC  H3A 1L4";
+    const doorTime = (formData.get("doorTime") as string) || "18:00"; // Default to 6:00 PM if not provided
 
     const peopleCountNum = parseInt(peopleCount);
     const people = [];
@@ -67,44 +74,43 @@ export async function POST(req: NextRequest) {
     }
 
     const secondaryColor = lightenColor(primaryColor, 15);
-    const templateVariant = `linkedin-${peopleCount}`;
+    const templateVariant = `mtl-code-${peopleCount}`;
 
     // Create submission record
     const submission = await prisma.submission.create({
       data: {
         ownerEmail: session.user.email,
-        templateFamily: "linkedin",
+        templateFamily: "mtl-code",
         templateVariant,
         primaryColor,
         secondaryColor,
         scale,
-        format,
+        formats: JSON.stringify(formats),
         eventTitle,
         venueName,
         addressLine,
         cityLine,
         eventDate,
+        doorTime,
         people: JSON.stringify(people),
         uploadUrls: JSON.stringify(uploadUrls),
       },
     });
 
-    // Trigger rendering (async)
+    // Trigger rendering (async) - pass cookies for authentication
+    const cookies = req.headers.get("cookie") || "";
     fetch(`${process.env.NEXTAUTH_URL || "http://localhost:3000"}/api/render`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        Cookie: cookies,
       },
       body: JSON.stringify({ submissionId: submission.id }),
-    }).catch(console.error);
+    });
 
     return NextResponse.json({ submissionId: submission.id });
-  } catch (error) {
-    console.error("Error submitting form:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+  } catch {
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
 

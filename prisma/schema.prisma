@@ -59,22 +59,22 @@ model VerificationToken {
 model Submission {
   id              String   @id @default(cuid())
   ownerEmail      String
-  templateFamily  String   @default("linkedin")
-  templateVariant String   // "linkedin-1" | "linkedin-2" | "linkedin-3"
+  templateFamily  String   @default("mtl-code")
+  templateVariant String   // "mtl-code-1" | "mtl-code-2" | "mtl-code-3"
   createdAt       DateTime @default(now())
   primaryColor    String
   secondaryColor  String
   scale           Int      // 1 | 2 | 3
-  format          String   // "png" | "jpg" | "webp" | "pdf"
+  formats         String   @default("[\"png\"]") // JSON array of formats: ["png", "jpg", "webp", "pdf"]
   eventTitle      String
   venueName       String
   addressLine     String
   cityLine        String
   eventDate       DateTime
+  doorTime        String   @default("18:00") // Time in HH:MM format (24-hour), default 6:00 PM
   people          String   // JSON array of people
   uploadUrls      String   // JSON array of upload URLs
-  outputUrl       String?
-  outputMimeType  String?
+  outputs         String?  // JSON array of output objects: [{url: string, format: string, mimeType: string}]
   
   user            User?    @relation(fields: [ownerEmail], references: [email])
   
