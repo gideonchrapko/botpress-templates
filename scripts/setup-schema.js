@@ -14,9 +14,10 @@ const provider = process.env.DATABASE_PROVIDER || 'sqlite';
 // Read the schema file
 const schema = fs.readFileSync(schemaPath, 'utf8');
 
-// Replace the provider line - find any provider = "value" or provider = env(...)
+// Replace the provider line - find any provider = "value" in the datasource block
+// Match: provider = "sqlite" or provider = "postgresql" (with optional whitespace)
 const updatedSchema = schema.replace(
-  /(provider\s*=\s*)(?:["'][^"']+["']|env\(["'][^"']+["']\))/,
+  /(datasource\s+db\s*\{[^}]*?provider\s*=\s*)(?:["'][^"']+["']|env\(["'][^"']+["']\))/s,
   `$1"${provider}"`
 );
 
@@ -24,5 +25,10 @@ if (updatedSchema !== schema) {
   fs.writeFileSync(schemaPath, updatedSchema);
   console.log(`✅ Database provider set to: ${provider}`);
 } else {
-  console.warn('⚠️  Could not find provider line to replace');
+  // Check if it's already set to the correct value
+  if (schema.includes(`provider = "${provider}"`)) {
+    // Already correct, no need to warn
+  } else {
+    console.warn('⚠️  Could not find provider line to replace');
+  }
 }
