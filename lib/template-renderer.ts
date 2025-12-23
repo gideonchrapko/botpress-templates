@@ -19,11 +19,16 @@ export async function renderTemplate(submission: Submission): Promise<string> {
   const templateVariant = submission.templateVariant;
   // Convert mtl-code-1, mtl-code-2, mtl-code-3 to quebec-linkedin-1, quebec-linkedin-2, quebec-linkedin-3
   const templateFileName = templateVariant.replace("mtl-code-", "quebec-linkedin-");
-  const templatePath = join(
-    process.cwd(),
-    "templates",
-    `${templateFileName}.html`
-  );
+  
+  // Try public/templates first (for Vercel), then root templates/ (for local dev)
+  const publicTemplatePath = join(process.cwd(), "public", "templates", `${templateFileName}.html`);
+  const rootTemplatePath = join(process.cwd(), "templates", `${templateFileName}.html`);
+  
+  const templatePath = existsSync(publicTemplatePath) ? publicTemplatePath : rootTemplatePath;
+  
+  if (!existsSync(templatePath)) {
+    throw new Error(`Template file not found: ${templateFileName}.html. Checked: ${publicTemplatePath} and ${rootTemplatePath}`);
+  }
 
   let html = await readFile(templatePath, "utf-8");
   const people = JSON.parse(submission.people);
