@@ -7,6 +7,7 @@
       "dependencies": {
         "@auth/prisma-adapter": "^2.7.0",
         "@hookform/resolvers": "^3.9.1",
+        "@playwright/browser-chromium": "^1.57.0",
         "@prisma/client": "^5.20.0",
         "@radix-ui/react-label": "^2.1.0",
         "@radix-ui/react-popover": "^1.1.2",
@@ -183,6 +184,8 @@
     "@nolyfill/is-core-module": ["@nolyfill/is-core-module@1.0.39", "", {}, "sha512-nn5ozdjYQpUCZlWGuxcJY/KpxkWQs4DcbMCmKojjyrYDEAGy4Ce19NN4v5MduafTwJlbKc99UA8YhSVqq9yPZA=="],
 
     "@panva/hkdf": ["@panva/hkdf@1.2.1", "", {}, "sha512-6oclG6Y3PiDFcoyk8srjLfVKyMfVCKJ27JwNPViuXziFpmdz+MZnZN/aKY0JGXgYuO/VghU0jcOAZgWXZ1Dmrw=="],
+
+    "@playwright/browser-chromium": ["@playwright/browser-chromium@1.57.0", "", { "dependencies": { "playwright-core": "1.57.0" } }, "sha512-pUg+2p6HwewLp8KCD9G6VYaS2iewdkNkyqMcSIxXBXOlp1ojTxLF6/bwyR4ixLMy6tyv75jhE8PzzMZiX5KzwQ=="],
 
     "@prisma/client": ["@prisma/client@5.22.0", "", { "peerDependencies": { "prisma": "*" }, "optionalPeers": ["prisma"] }, "sha512-M0SVXfyHnQREBKxCgyo7sffrKttwE6R8PMq330MIUF0pTwjUhLbW84pFDlf06B27XyCR++VtjugEnIHdr07SVA=="],
 

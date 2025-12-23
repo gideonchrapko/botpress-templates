@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { renderTemplate, getPosterDimensions } from "@/lib/template-renderer";
 import { chromium } from "playwright";
+import { installChromium } from "@playwright/browser-chromium";
 import { writeFile, mkdir } from "fs/promises";
 import { join } from "path";
 import { existsSync } from "fs";
@@ -36,7 +37,12 @@ export async function POST(req: NextRequest) {
     const dimensions = getPosterDimensions(submission.scale);
 
     // Launch Playwright
-    // For Vercel, use system dependencies
+    // For Vercel, set browsers path to /tmp (writable directory)
+    if (process.env.VERCEL && !process.env.PLAYWRIGHT_BROWSERS_PATH) {
+      process.env.PLAYWRIGHT_BROWSERS_PATH = join(os.tmpdir(), 'playwright-browsers');
+      // Ensure Chromium is installed in the writable location
+      await installChromium();
+    }
     const browser = await chromium.launch({
       args: ['--no-sandbox', '--disable-setuid-sandbox'],
     });
