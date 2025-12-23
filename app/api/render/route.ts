@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { renderTemplate, getPosterDimensions } from "@/lib/template-renderer";
 import puppeteer from "puppeteer-core";
 import chromium from "@sparticuz/chromium";
-import { writeFile, mkdir } from "fs/promises";
+import { writeFile, mkdir, readFile } from "fs/promises";
 import { join } from "path";
 import { existsSync } from "fs";
 import os from "os";
@@ -95,7 +95,10 @@ export async function POST(req: NextRequest) {
         });
       }
 
-      const outputUrl = `/storage/outputs/${filename}`;
+      // Read file into memory and convert to base64
+      // This is necessary because Vercel's /tmp is ephemeral
+      const fileBuffer = await readFile(filepath);
+      const base64 = fileBuffer.toString("base64");
       const mimeType =
         format === "pdf"
           ? "application/pdf"
@@ -104,8 +107,11 @@ export async function POST(req: NextRequest) {
           : format === "webp"
           ? "image/png" // Saved as PNG but with webp extension
           : `image/${format}`;
+      const dataUri = `data:${mimeType};base64,${base64}`;
 
-      outputs.push({ url: outputUrl, format, mimeType });
+      // Store as data URI in database (works in both local and Vercel)
+      const outputUrl = `/storage/outputs/${filename}`;
+      outputs.push({ url: outputUrl, format, mimeType, dataUri });
     }
 
     await browser.close();
