@@ -39,6 +39,17 @@ export const authOptions = {
   session: {
     strategy: "database" as const,
   },
+  cookies: {
+    pkceCodeVerifier: {
+      name: `${process.env.NODE_ENV === "production" ? "__Secure-" : ""}authjs.pkce.code_verifier`,
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+      },
+    },
+  },
 };
 
 // Create and export the auth instance for use in middleware and server components
