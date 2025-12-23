@@ -2,8 +2,19 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { renderTemplate, getPosterDimensions } from "@/lib/template-renderer";
-import puppeteer from "puppeteer-core";
+import puppeteerCore from "puppeteer-core";
 import chromium from "@sparticuz/chromium";
+
+// Use full puppeteer in dev (includes Chromium), puppeteer-core in production
+// Dynamically import puppeteer only in dev to avoid bundling it in production
+const getPuppeteer = async () => {
+  if (process.env.VERCEL) {
+    return puppeteerCore;
+  }
+  // Only import full puppeteer in local dev
+  const puppeteerFull = await import("puppeteer");
+  return puppeteerFull.default;
+};
 import { writeFile, mkdir, readFile } from "fs/promises";
 import { join } from "path";
 import { existsSync } from "fs";
@@ -38,11 +49,13 @@ export async function POST(req: NextRequest) {
 
     // Launch Puppeteer with Chromium
     // For Vercel, use @sparticuz/chromium (serverless-optimized)
+    // For local dev, use full puppeteer (includes Chromium)
+    const puppeteer = await getPuppeteer();
     const browser = await puppeteer.launch({
       args: process.env.VERCEL ? chromium.args : ['--no-sandbox', '--disable-setuid-sandbox'],
       executablePath: process.env.VERCEL
         ? await chromium.executablePath()
-        : undefined, // Use system Chrome/Chromium in local dev
+        : undefined, // Full puppeteer in dev includes Chromium, so undefined is fine
       headless: true,
     });
     const page = await browser.newPage();

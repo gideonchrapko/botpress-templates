@@ -39,3 +39,4 @@ export function AutoRefresh({
   return null; // This component doesn't render anything
 }
 
+

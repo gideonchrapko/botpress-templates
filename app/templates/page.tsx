@@ -8,7 +8,7 @@ export default function TemplatesPage() {
       <div className="mb-8">
         <h1 className="text-3xl font-bold">Choose a Template</h1>
         <p className="text-muted-foreground mt-2">
-          Select a template to start creating your poster
+          Find the template you need to generate your graphics
         </p>
       </div>
       

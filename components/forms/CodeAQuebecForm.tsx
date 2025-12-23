@@ -19,7 +19,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DatePicker } from "@/components/DatePicker";
 import { X } from "lucide-react";
 
-export default function LinkedinForm() {
+export default function CodeAQuebecForm() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
