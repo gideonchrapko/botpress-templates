@@ -19,14 +19,19 @@ export function RetryRenderButton({ submissionId }: { submissionId: string }) {
       });
 
       if (!response.ok) {
-        throw new Error("Rendering failed");
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData.details 
+          ? `${errorData.error}: ${errorData.details}`
+          : errorData.error || "Rendering failed";
+        throw new Error(errorMessage);
       }
 
       setTimeout(() => {
         window.location.reload();
       }, 2000);
-    } catch {
-      alert("Failed to trigger rendering. Please try again.");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to trigger rendering. Please try again.";
+      alert(message);
       setIsRetrying(false);
     }
   };

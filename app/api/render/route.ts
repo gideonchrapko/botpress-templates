@@ -6,6 +6,7 @@ import { chromium } from "playwright";
 import { writeFile, mkdir } from "fs/promises";
 import { join } from "path";
 import { existsSync } from "fs";
+import os from "os";
 
 export async function POST(req: NextRequest) {
   try {
@@ -49,7 +50,7 @@ export async function POST(req: NextRequest) {
 
     // Use /tmp in production (Vercel), storage/outputs in local dev
     const outputDir = process.env.VERCEL
-      ? join("/tmp", "storage", "outputs")
+      ? join(os.tmpdir(), "storage", "outputs")
       : join(process.cwd(), "storage", "outputs");
     if (!existsSync(outputDir)) {
       await mkdir(outputDir, { recursive: true });
@@ -110,8 +111,13 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json({ success: true, outputs });
-  } catch {
-    return NextResponse.json({ error: "Rendering failed" }, { status: 500 });
+  } catch (error) {
+    console.error("Render error:", error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    return NextResponse.json(
+      { error: "Rendering failed", details: errorMessage },
+      { status: 500 }
+    );
   }
 }
 

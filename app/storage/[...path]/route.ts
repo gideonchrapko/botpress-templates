@@ -3,6 +3,7 @@ import { readFile } from "fs/promises";
 import { join } from "path";
 import { existsSync } from "fs";
 import { auth } from "@/lib/auth";
+import os from "os";
 
 export async function GET(
   req: NextRequest,
@@ -17,7 +18,7 @@ export async function GET(
 
     // Use /tmp in production (Vercel), storage in local dev
     const filePath = process.env.VERCEL
-      ? join("/tmp", "storage", ...path)
+      ? join(os.tmpdir(), "storage", ...path)
       : join(process.cwd(), "storage", ...path);
     
     if (!existsSync(filePath)) {
