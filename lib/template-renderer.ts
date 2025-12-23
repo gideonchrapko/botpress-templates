@@ -104,6 +104,46 @@ export async function renderTemplate(submission: Submission): Promise<string> {
     }
   }
 
+  // Process fonts: convert font-face.css and embed fonts as base64
+  const fontsDir = join(process.cwd(), "public", "fonts");
+  const fontFaceCssPath = join(fontsDir, "font-face.css");
+  
+  if (existsSync(fontFaceCssPath)) {
+    let fontFaceCss = await readFile(fontFaceCssPath, "utf-8");
+    
+    // Replace all font file references with base64 data URIs
+    const fontFileRegex = /url\(['"]?([^'")]+\.woff2?)['"]?\)/g;
+    let fontFileMatch;
+    const fontReplacements: Array<{ original: string; replacement: string }> = [];
+    
+    while ((fontFileMatch = fontFileRegex.exec(fontFaceCss)) !== null) {
+      const fontFileName = fontFileMatch[1];
+      const fontFilePath = join(fontsDir, fontFileName);
+      
+      if (existsSync(fontFilePath)) {
+        const fontBuffer = await readFile(fontFilePath);
+        const base64 = fontBuffer.toString("base64");
+        const mimeType = fontFileName.endsWith(".woff2") ? "font/woff2" : "font/woff";
+        const dataUri = `data:${mimeType};base64,${base64}`;
+        fontReplacements.push({
+          original: fontFileMatch[0],
+          replacement: `url('${dataUri}')`,
+        });
+      }
+    }
+    
+    // Apply all replacements
+    for (const replacement of fontReplacements) {
+      fontFaceCss = fontFaceCss.replace(replacement.original, replacement.replacement);
+    }
+    
+    // Replace the link tag with inline style
+    html = html.replace(
+      /<link\s+rel="stylesheet"\s+href="fonts\/font-face\.css">/i,
+      `<style>${fontFaceCss}</style>`
+    );
+  }
+
   // Format date
   const formattedDate = format(new Date(submission.eventDate), "EEEE, MMMM d");
 
