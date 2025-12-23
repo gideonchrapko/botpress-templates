@@ -20,10 +20,7 @@ export function RetryRenderButton({ submissionId }: { submissionId: string }) {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        const errorMessage = errorData.details 
-          ? `${errorData.error}: ${errorData.details}`
-          : errorData.error || "Rendering failed";
-        throw new Error(errorMessage);
+        throw new Error(errorData.error || "Rendering failed");
       }
 
       setTimeout(() => {

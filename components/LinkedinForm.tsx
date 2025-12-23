@@ -131,8 +131,7 @@ export default function LinkedinForm() {
         if (headshotFile.size > 2 * 1024 * 1024) {
           try {
             headshotFile = await compressImage(headshotFile);
-          } catch (error) {
-            console.error("Image compression failed:", error);
+          } catch {
             // Continue with original file if compression fails
           }
         }
@@ -150,10 +149,7 @@ export default function LinkedinForm() {
 
             if (!response.ok) {
               const errorData = await response.json().catch(() => ({}));
-              const errorMessage = errorData.details 
-                ? `${errorData.error}: ${errorData.details}`
-                : errorData.error || "Submission failed";
-              throw new Error(errorMessage);
+              throw new Error(errorData.error || "Submission failed");
             }
 
       const result = await response.json();
@@ -167,8 +163,6 @@ export default function LinkedinForm() {
   };
 
   const onError = (errors: any) => {
-    console.error("Form validation errors:", errors);
-    // Show first error
     const firstError = Object.values(errors)[0] as any;
     if (firstError?.message) {
       alert(`Validation error: ${firstError.message}`);

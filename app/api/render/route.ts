@@ -125,13 +125,8 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json({ success: true, outputs });
-  } catch (error) {
-    console.error("Render error:", error);
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    return NextResponse.json(
-      { error: "Rendering failed", details: errorMessage },
-      { status: 500 }
-    );
+  } catch {
+    return NextResponse.json({ error: "Rendering failed" }, { status: 500 });
   }
 }
 
