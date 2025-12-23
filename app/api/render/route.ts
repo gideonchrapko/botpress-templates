@@ -40,11 +40,10 @@ export async function POST(req: NextRequest) {
     // For Vercel, use @sparticuz/chromium (serverless-optimized)
     const browser = await puppeteer.launch({
       args: process.env.VERCEL ? chromium.args : ['--no-sandbox', '--disable-setuid-sandbox'],
-      defaultViewport: chromium.defaultViewport,
       executablePath: process.env.VERCEL
         ? await chromium.executablePath()
         : undefined, // Use system Chrome/Chromium in local dev
-      headless: chromium.headless,
+      headless: true,
     });
     const page = await browser.newPage();
     
