@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Generate outputs for each format
-    const outputs: Array<{ url: string; format: string; mimeType: string }> = [];
+    const outputs: Array<{ url: string; format: string; mimeType: string; dataUri?: string }> = [];
 
     for (const format of formats) {
       const filename = `${submissionId}.${format}`;
