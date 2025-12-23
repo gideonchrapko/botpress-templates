@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { lightenColor } from "@/lib/utils";
+import sharp from "sharp";
 
 export async function POST(req: NextRequest) {
   try {
@@ -47,14 +48,21 @@ export async function POST(req: NextRequest) {
       }
 
       // Convert headshot to base64 for storage (works in both local and Vercel)
+      // First, compress and resize the image to reduce file size
       const bytes = await headshot.arrayBuffer();
-      const buffer = Buffer.from(bytes);
-      const ext = headshot.name.split(".").pop()?.toLowerCase();
-      let mimeType = "image/png";
-      if (ext === "jpg" || ext === "jpeg") mimeType = "image/jpeg";
-      else if (ext === "png") mimeType = "image/png";
-      else if (ext === "webp") mimeType = "image/webp";
-      const base64 = buffer.toString("base64");
+      const inputBuffer = Buffer.from(bytes);
+      
+      // Resize to max 800x800 (maintains aspect ratio) and compress
+      const compressedBuffer = await sharp(inputBuffer)
+        .resize(800, 800, {
+          fit: "inside",
+          withoutEnlargement: true,
+        })
+        .jpeg({ quality: 85, mozjpeg: true }) // Convert to JPEG for better compression
+        .toBuffer();
+      
+      const mimeType = "image/jpeg";
+      const base64 = compressedBuffer.toString("base64");
       const headshotDataUri = `data:${mimeType};base64,${base64}`;
 
       // Store as data URI instead of file path (works in serverless)

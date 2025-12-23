@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
 import { Download } from "lucide-react";
+import { RetryRenderButton } from "@/components/RetryRenderButton";
+import { AutoRefresh } from "@/components/AutoRefresh";
 
 export default async function ResultsPage({
   params,
@@ -40,15 +42,15 @@ export default async function ResultsPage({
 
   // Parse outputs from JSON
   const outputs = submission.outputs ? (JSON.parse(submission.outputs) as Array<{ url: string; format: string; mimeType: string }>) : null;
-  const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
   
   // Get first image output for preview (prefer PNG, then JPG, then WebP)
   const previewOutput = outputs?.find((o) => o.format !== "pdf") || outputs?.[0];
-  const previewUrl = previewOutput ? `${baseUrl}${previewOutput.url}` : null;
+  const previewUrl = previewOutput ? previewOutput.url : null;
   const isPreviewImage = previewOutput?.format !== "pdf";
 
   return (
     <div className="container mx-auto py-8 max-w-4xl">
+      <AutoRefresh hasOutputs={!!outputs && outputs.length > 0} submissionId={id} />
       <div className="mb-8">
         <h1 className="text-3xl font-bold">Poster Generated</h1>
         <p className="text-muted-foreground mt-2">
@@ -72,7 +74,7 @@ export default async function ResultsPage({
               ) : previewOutput ? (
                 <div className="border rounded-lg p-8 text-center">
                   <p className="mb-4">PDF generated successfully</p>
-                  <a href={`${baseUrl}${previewOutput.url}`} download>
+                  <a href={previewOutput.url} download>
                     <Button>
                       <Download className="mr-2 h-4 w-4" />
                       Download PDF
@@ -87,7 +89,7 @@ export default async function ResultsPage({
                   {outputs.map((output) => (
                     <a
                       key={output.format}
-                      href={`${baseUrl}${output.url}`}
+                      href={output.url}
                       download
                     >
                       <Button variant="outline">
@@ -108,11 +110,14 @@ export default async function ResultsPage({
           ) : (
             <div className="text-center py-8">
               <p className="text-muted-foreground mb-4">
-                Your poster is being generated. Please refresh in a moment.
+                Your poster is being generated. This may take a few moments.
               </p>
-              <Link href="/templates">
-                <Button variant="outline">Back to Templates</Button>
-              </Link>
+              <div className="flex gap-4 justify-center">
+                <RetryRenderButton submissionId={id} />
+                <Link href="/templates">
+                  <Button variant="outline">Back to Templates</Button>
+                </Link>
+              </div>
             </div>
           )}
         </CardContent>

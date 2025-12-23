@@ -48,6 +48,65 @@ export default function LinkedinForm() {
 
   const canAddPerson = fields.length < 3;
 
+  // Compress image client-side before upload
+  const compressImage = (file: File): Promise<File> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target?.result as string;
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          const maxWidth = 800;
+          const maxHeight = 800;
+          let width = img.width;
+          let height = img.height;
+
+          // Calculate new dimensions
+          if (width > height) {
+            if (width > maxWidth) {
+              height = (height * maxWidth) / width;
+              width = maxWidth;
+            }
+          } else {
+            if (height > maxHeight) {
+              width = (width * maxHeight) / height;
+              height = maxHeight;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          if (!ctx) {
+            reject(new Error("Could not get canvas context"));
+            return;
+          }
+          ctx.drawImage(img, 0, 0, width, height);
+
+          canvas.toBlob(
+            (blob) => {
+              if (!blob) {
+                reject(new Error("Compression failed"));
+                return;
+              }
+              const compressedFile = new File([blob], file.name, {
+                type: "image/jpeg",
+                lastModified: Date.now(),
+              });
+              resolve(compressedFile);
+            },
+            "image/jpeg",
+            0.85 // 85% quality
+          );
+        };
+        img.onerror = reject;
+      };
+      reader.onerror = reject;
+    });
+  };
+
   const onSubmit = async (data: LinkedinFormData) => {
     setIsSubmitting(true);
     try {
@@ -63,13 +122,26 @@ export default function LinkedinForm() {
       formData.append("eventDate", data.eventDate.toISOString());
       formData.append("doorTime", data.doorTime);
 
-      // Append headshots
-      data.people.forEach((person, index) => {
-        formData.append(`headshot_${index}`, person.headshot);
+      // Append headshots (compress first if needed)
+      for (let index = 0; index < data.people.length; index++) {
+        const person = data.people[index];
+        let headshotFile = person.headshot;
+        
+        // Compress if file is larger than 2MB
+        if (headshotFile.size > 2 * 1024 * 1024) {
+          try {
+            headshotFile = await compressImage(headshotFile);
+          } catch (error) {
+            console.error("Image compression failed:", error);
+            // Continue with original file if compression fails
+          }
+        }
+        
+        formData.append(`headshot_${index}`, headshotFile);
         formData.append(`person_${index}_name`, person.name);
         formData.append(`person_${index}_role`, person.role);
         formData.append(`person_${index}_talkTitle`, person.talkTitle);
-      });
+      }
 
       const response = await fetch("/api/submit", {
         method: "POST",
