@@ -114,6 +114,7 @@ export default function CodeAQuebecForm() {
       formData.append("primaryColor", data.primaryColor);
       formData.append("peopleCount", data.people.length.toString());
       formData.append("scale", data.scale);
+      formData.append("templateFamily", "code-a-quebec");
       // Append each format
       data.formats.forEach((format) => {
         formData.append("formats", format);
@@ -280,7 +281,7 @@ export default function CodeAQuebecForm() {
             <Input
               id="eventTitle"
               {...register("eventTitle")}
-              placeholder="Code @ Quebec"
+              placeholder="Kubernetes The Right Way #"
               maxLength={60}
             />
             {errors.eventTitle && (

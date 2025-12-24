@@ -78,13 +78,14 @@ export async function POST(req: NextRequest) {
     }
 
     const secondaryColor = lightenColor(primaryColor, 15);
-    const templateVariant = `mtl-code-${peopleCount}`;
+    const templateFamily = (formData.get("templateFamily") as string) || "mtl-code";
+    const templateVariant = `${templateFamily}-${peopleCount}`;
 
     // Create submission record
     const submission = await prisma.submission.create({
       data: {
         ownerEmail: session.user.email,
-        templateFamily: "mtl-code",
+        templateFamily,
         templateVariant,
         primaryColor,
         secondaryColor,

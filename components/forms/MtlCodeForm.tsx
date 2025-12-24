@@ -204,70 +204,6 @@ export default function MTLCodeForm() {
         </CardContent>
       </Card>
 
-      {/* Output Settings */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Settings</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <Label htmlFor="scale">Poster Scale</Label>
-            <Select
-              value={watch("scale")}
-              onValueChange={(value) => setValue("scale", value as "1" | "2" | "3")}
-            >
-              <SelectTrigger id="scale">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="1">1x</SelectItem>
-                <SelectItem value="2">2x</SelectItem>
-                <SelectItem value="3">3x</SelectItem>
-              </SelectContent>
-            </Select>
-            {errors.scale && (
-              <p className="text-sm text-destructive mt-1">
-                {errors.scale.message}
-              </p>
-            )}
-          </div>
-
-          <div>
-            <Label>Output Formats</Label>
-            <div className="flex flex-wrap gap-4 mt-2">
-              {(["png", "jpg", "webp", "pdf"] as const).map((format) => (
-                <div key={format} className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id={`format-${format}`}
-                    checked={watch("formats").includes(format)}
-                    onChange={(e) => {
-                      const currentFormats = watch("formats");
-                      if (e.target.checked) {
-                        setValue("formats", [...currentFormats, format], { shouldValidate: true });
-                      } else {
-                        setValue("formats", currentFormats.filter((f) => f !== format), { shouldValidate: true });
-                      }
-                    }}
-                    className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-                  />
-                  <Label
-                    htmlFor={`format-${format}`}
-                    className="text-sm font-normal cursor-pointer"
-                  >
-                    {format.toUpperCase()}
-                  </Label>
-                </div>
-              ))}
-            </div>
-            {errors.formats && (
-              <p className="text-sm text-destructive mt-1">
-                {errors.formats.message}
-              </p>
-            )}
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Event Information */}
       <Card>
@@ -280,7 +216,7 @@ export default function MTLCodeForm() {
             <Input
               id="eventTitle"
               {...register("eventTitle")}
-              placeholder="Code @ Quebec"
+              placeholder="Founders face to face"
               maxLength={60}
             />
             {errors.eventTitle && (
@@ -425,6 +361,71 @@ export default function MTLCodeForm() {
               No people added. Click "Add Person" to get started.
             </p>
           )}
+        </CardContent>
+      </Card>
+
+      {/* Output Settings */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Settings</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <Label htmlFor="scale">Poster Scale</Label>
+            <Select
+              value={watch("scale")}
+              onValueChange={(value) => setValue("scale", value as "1" | "2" | "3")}
+            >
+              <SelectTrigger id="scale">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1">1x</SelectItem>
+                <SelectItem value="2">2x</SelectItem>
+                <SelectItem value="3">3x</SelectItem>
+              </SelectContent>
+            </Select>
+            {errors.scale && (
+              <p className="text-sm text-destructive mt-1">
+                {errors.scale.message}
+              </p>
+            )}
+          </div>
+
+          <div>
+            <Label>Output Formats</Label>
+            <div className="flex flex-wrap gap-4 mt-2">
+              {(["png", "jpg", "webp", "pdf"] as const).map((format) => (
+                <div key={format} className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id={`format-${format}`}
+                    checked={watch("formats").includes(format)}
+                    onChange={(e) => {
+                      const currentFormats = watch("formats");
+                      if (e.target.checked) {
+                        setValue("formats", [...currentFormats, format], { shouldValidate: true });
+                      } else {
+                        setValue("formats", currentFormats.filter((f) => f !== format), { shouldValidate: true });
+                      }
+                    }}
+                    className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                  />
+                  <Label
+                    htmlFor={`format-${format}`}
+                    className="text-sm font-normal cursor-pointer"
+                  >
+                    {format.toUpperCase()}
+                  </Label>
+                </div>
+              ))}
+            </div>
+            {errors.formats && (
+              <p className="text-sm text-destructive mt-1">
+                {errors.formats.message}
+              </p>
+            )}
+          </div>
         </CardContent>
       </Card>
 
