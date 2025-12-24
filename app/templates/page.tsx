@@ -29,6 +29,23 @@ export default function TemplatesPage() {
             </CardContent>
           </Card>
         </Link>
+        
+        <Link href="/templates/code-a-quebec/create">
+          <Card className="cursor-pointer hover:shadow-lg transition-shadow">
+            <CardHeader>
+              <FileText className="h-8 w-8 mb-2" />
+              <CardTitle>Code @ Québec Event Poster</CardTitle>
+              <CardDescription>
+                Generate a linkedin/instagram poster for Code @ Québec 1350x1080
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Supports 1-3 speakers with customizable colors and formats. Logo in bottom-right corner.
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
     </div>
   );

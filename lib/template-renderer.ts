@@ -1,6 +1,7 @@
 import { readFile } from "fs/promises";
 import { join } from "path";
 import { format } from "date-fns";
+import { fr } from "date-fns/locale";
 import { Submission } from "@prisma/client";
 import { existsSync } from "fs";
 import { lightenColor } from "@/lib/utils";
@@ -17,8 +18,17 @@ export function getPosterDimensions(scale: number) {
 
 export async function renderTemplate(submission: Submission): Promise<string> {
   const templateVariant = submission.templateVariant;
-  // Convert mtl-code-1, mtl-code-2, mtl-code-3 to quebec-linkedin-1, quebec-linkedin-2, quebec-linkedin-3
-  const templateFileName = templateVariant.replace("mtl-code-", "quebec-linkedin-");
+  const templateFamily = submission.templateFamily;
+  
+  // Convert template variant to template file name
+  let templateFileName: string;
+  if (templateFamily === "code-a-quebec") {
+    // code-a-quebec-1, code-a-quebec-2, code-a-quebec-3 -> code-a-quebec-1, code-a-quebec-2, code-a-quebec-3
+    templateFileName = templateVariant;
+  } else {
+    // mtl-code-1, mtl-code-2, mtl-code-3 -> quebec-linkedin-1, quebec-linkedin-2, quebec-linkedin-3
+    templateFileName = templateVariant.replace("mtl-code-", "quebec-linkedin-");
+  }
   
   // Try public/templates first (for Vercel), then root templates/ (for local dev)
   const publicTemplatePath = join(process.cwd(), "public", "templates", `${templateFileName}.html`);
@@ -66,10 +76,16 @@ export async function renderTemplate(submission: Submission): Promise<string> {
   const assetSrcRegex = /src="assets\/([^"]+)"/g;
   let assetSrcMatch;
   while ((assetSrcMatch = assetSrcRegex.exec(html)) !== null) {
-    const assetFile = assetSrcMatch[1];
+    let assetFile = assetSrcMatch[1];
     if (assetFile === "speaker-photo.png") {
       continue; // Skip speaker-photo.png, will be replaced later
     }
+    
+    // Swap logo file based on template family
+    if (assetFile === "mtl-code-wide.svg" && templateFamily === "code-a-quebec") {
+      assetFile = "code-@-québec-long.svg";
+    }
+    
     const assetPath = join(assetsDir, assetFile);
     
     // Special handling for decoration.svg - replace primary color before converting
@@ -93,10 +109,16 @@ export async function renderTemplate(submission: Submission): Promise<string> {
   const assetHrefRegex = /href="assets\/([^"]+)"/g;
   let assetHrefMatch;
   while ((assetHrefMatch = assetHrefRegex.exec(html)) !== null) {
-    const assetFile = assetHrefMatch[1];
+    let assetFile = assetHrefMatch[1];
     if (assetFile === "speaker-photo.png") {
       continue; // Skip speaker-photo.png, will be replaced later
     }
+    
+    // Swap logo file based on template family
+    if (assetFile === "mtl-code-wide.svg" && templateFamily === "code-a-quebec") {
+      assetFile = "code-@-québec-long.svg";
+    }
+    
     const assetPath = join(assetsDir, assetFile);
     const dataUri = await fileToDataUri(assetPath);
     if (dataUri) {
@@ -144,8 +166,11 @@ export async function renderTemplate(submission: Submission): Promise<string> {
     );
   }
 
-  // Format date
-  const formattedDate = format(new Date(submission.eventDate), "EEEE, MMMM d");
+  // Format date based on template family
+  const isCodeAQuebec = templateFamily === "code-a-quebec";
+  const formattedDate = isCodeAQuebec
+    ? format(new Date(submission.eventDate), "EEEE d MMMM", { locale: fr }) // "lundi 20 novembre" (French day + full month)
+    : format(new Date(submission.eventDate), "EEEE, MMMM d"); // "Thursday, November 20"
 
   // Replace colors in template:
   // - #F4F4F4 (whitish background/text) stays the same - DO NOT replace
@@ -159,26 +184,36 @@ export async function renderTemplate(submission: Submission): Promise<string> {
   // Replace event title
   html = html.replace(/Placeholder Text/g, submission.eventTitle);
 
-  // Replace date
-  html = html.replace(/Thursday, November 20/g, formattedDate);
+  // Replace date - handle both formats
+  if (isCodeAQuebec) {
+    // Replace French date format (e.g., "lundi 20 novembre")
+    // Match any French day name followed by day number and month
+    html = html.replace(/(lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)\s+\d{1,2}\s+(novembre|décembre|janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre)/gi, formattedDate);
+  } else {
+    html = html.replace(/Thursday, November 20/g, formattedDate);
+  }
 
   // Location is hardcoded in template - no replacement needed
   // Address: "400 Blvd. De Maisonneuve Ouest"
   // City: "Montreal, QC  H3A 1L4"
   
-  // Format door time from HH:MM (24-hour) to h:mm a (12-hour with AM/PM)
-  const formatDoorTime = (time24: string): string => {
-    const [hours, minutes] = time24.split(":");
-    const hour = parseInt(hours, 10);
-    const ampm = hour >= 12 ? "PM" : "AM";
-    const hour12 = hour % 12 || 12; // Convert to 12-hour format (0 becomes 12)
-    return `${hour12}:${minutes}${ampm}`;
-  };
-  
-  // Use doorTime from submission, or default to 6:00 PM if not available (for backwards compatibility)
+  // Format door time based on template family
   const doorTime = (submission as any).doorTime || "18:00";
-  const formattedDoorTime = formatDoorTime(doorTime);
-  html = html.replace(/Doors open @ 6:00PM/g, `Doors open @ ${formattedDoorTime}`);
+  if (isCodeAQuebec) {
+    // For code-a-quebec, use French format "Ouverture à 18:00"
+    html = html.replace(/Ouverture à 18:00/g, `Ouverture à ${doorTime}`);
+  } else {
+    // For mtl-code, convert to 12-hour format (e.g., "6:00PM")
+    const formatDoorTime = (time24: string): string => {
+      const [hours, minutes] = time24.split(":");
+      const hour = parseInt(hours, 10);
+      const ampm = hour >= 12 ? "PM" : "AM";
+      const hour12 = hour % 12 || 12; // Convert to 12-hour format (0 becomes 12)
+      return `${hour12}:${minutes}${ampm}`;
+    };
+    const formattedDoorTime = formatDoorTime(doorTime);
+    html = html.replace(/Doors open @ 6:00PM/g, `Doors open @ ${formattedDoorTime}`);
+  }
 
   // Replace people information using a sequential block-based approach
   // For each person, find and replace ALL their placeholders (name, role, talk title) together
