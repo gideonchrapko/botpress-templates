@@ -20,24 +20,19 @@ export async function renderTemplate(submission: Submission): Promise<string> {
   const templateVariant = submission.templateVariant;
   const templateFamily = submission.templateFamily;
   
-  // Convert template variant to template file name
-  let templateFileName: string;
-  if (templateFamily === "code-a-quebec") {
-    // code-a-quebec-1, code-a-quebec-2, code-a-quebec-3 -> code-a-quebec-1, code-a-quebec-2, code-a-quebec-3
-    templateFileName = templateVariant;
-  } else {
-    // mtl-code-1, mtl-code-2, mtl-code-3 -> quebec-linkedin-1, quebec-linkedin-2, quebec-linkedin-3
-    templateFileName = templateVariant.replace("mtl-code-", "quebec-linkedin-");
-  }
+  // Extract variant number (e.g., "mtl-code-1" -> "1")
+  const variantNumber = templateVariant.split("-").pop() || "1";
   
-  // Try public/templates first (for Vercel), then root templates/ (for local dev)
-  const publicTemplatePath = join(process.cwd(), "public", "templates", `${templateFileName}.html`);
-  const rootTemplatePath = join(process.cwd(), "templates", `${templateFileName}.html`);
-  
-  const templatePath = existsSync(publicTemplatePath) ? publicTemplatePath : rootTemplatePath;
+  // Build template path: templates/{family}/template-{variant}.html
+  const templatePath = join(
+    process.cwd(),
+    "templates",
+    templateFamily,
+    `template-${variantNumber}.html`
+  );
   
   if (!existsSync(templatePath)) {
-    throw new Error(`Template file not found: ${templateFileName}.html. Checked: ${publicTemplatePath} and ${rootTemplatePath}`);
+    throw new Error(`Template file not found: ${templatePath}`);
   }
 
   let html = await readFile(templatePath, "utf-8");
@@ -87,7 +82,7 @@ export async function renderTemplate(submission: Submission): Promise<string> {
     }
     
     const assetPath = join(assetsDir, assetFile);
-    
+
     // Special handling for decoration.svg - replace primary color before converting
     if (assetFile === "decoration.svg") {
       let svgContent = await readFile(assetPath, "utf-8");
@@ -190,7 +185,7 @@ export async function renderTemplate(submission: Submission): Promise<string> {
     // Match any French day name followed by day number and month
     html = html.replace(/(lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)\s+\d{1,2}\s+(novembre|décembre|janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre)/gi, formattedDate);
   } else {
-    html = html.replace(/Thursday, November 20/g, formattedDate);
+  html = html.replace(/Thursday, November 20/g, formattedDate);
   }
 
   // Location is hardcoded in template - no replacement needed
@@ -246,14 +241,14 @@ export async function renderTemplate(submission: Submission): Promise<string> {
       /Graphic Designer @ Botpress/,
     ];
     replaceFirst(rolePatterns, person.role);
-    
+
     // Replace talk title - try all possible talk title placeholders, replace first match only
     const talkTitlePatterns = [
       /Kubernetes the right way: A platform engineering approach to K8s/,
       /Lorem Ipsum Dolor Sit/,
     ];
     replaceFirst(talkTitlePatterns, person.talkTitle);
-    
+
     // Headshot is already a base64 data URI (stored directly in database)
     let headshotDataUri: string | null = null;
     if (person.headshotUrl && person.headshotUrl.startsWith("data:")) {
@@ -278,7 +273,7 @@ export async function renderTemplate(submission: Submission): Promise<string> {
         html = html.replace(imgSrcPattern, `src="${headshotDataUri}"`);
       } else if (html.match(svgHrefPattern)) {
         html = html.replace(svgHrefPattern, `href="${headshotDataUri}"`);
-      }
+    }
     }
   }
 
