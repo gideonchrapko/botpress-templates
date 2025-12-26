@@ -49,13 +49,11 @@ export default async function ResultsPage({
   const previewUrl = previewOutput ? previewOutput.url : null;
   const isPreviewImage = previewOutput?.format !== "pdf";
 
-  // Determine template name for breadcrumb
+  // Determine template name for breadcrumb (will be loaded from config in future)
   const templateName = submission.templateFamily === "code-a-quebec" 
     ? "Code @ Québec Event Poster" 
     : "MTL Code Event Poster";
-  const templateHref = submission.templateFamily === "code-a-quebec"
-    ? "/templates/code-a-quebec/create"
-    : "/templates/mtl-code/create";
+  const templateHref = `/templates/${submission.templateFamily}/create`;
 
   return (
     <div className="container mx-auto py-8 max-w-4xl">
