@@ -8,6 +8,7 @@ import { Download } from "lucide-react";
 import { RetryRenderButton } from "@/components/RetryRenderButton";
 import { AutoRefresh } from "@/components/AutoRefresh";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { getTemplateConfig } from "@/lib/template-registry";
 
 export default async function ResultsPage({
   params,
@@ -49,10 +50,9 @@ export default async function ResultsPage({
   const previewUrl = previewOutput ? previewOutput.url : null;
   const isPreviewImage = previewOutput?.format !== "pdf";
 
-  // Determine template name for breadcrumb (will be loaded from config in future)
-  const templateName = submission.templateFamily === "code-a-quebec" 
-    ? "Code @ Québec Event Poster" 
-    : "MTL Code Event Poster";
+  // Load template config to get name
+  const templateConfig = await getTemplateConfig(submission.templateFamily);
+  const templateName = templateConfig?.name || "Template";
   const templateHref = `/templates/${submission.templateFamily}/create`;
 
   return (
@@ -65,6 +65,7 @@ export default async function ResultsPage({
           { label: "Results" },
         ]}
       />
+      
       <div className="mb-8">
         <h1 className="text-3xl font-bold">Poster Generated</h1>
         <p className="text-muted-foreground mt-2">
