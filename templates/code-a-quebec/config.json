@@ -1,0 +1,80 @@
+{
+  "id": "code-a-quebec",
+  "name": "Code @ Québec Event Poster",
+  "width": 1080,
+  "height": 1350,
+  "variants": ["1", "2", "3"],
+  "fields": [
+    {
+      "type": "text",
+      "name": "eventTitle",
+      "label": "Event Title",
+      "placeholder": "Code @ Quebec",
+      "maxLength": 60,
+      "replacements": [
+        { "pattern": "Placeholder Text", "type": "text" }
+      ]
+    },
+    {
+      "type": "color",
+      "name": "primaryColor",
+      "label": "Primary Color",
+      "default": "#3D9DFF",
+      "replacements": [
+        { "pattern": "#3D9DFF", "type": "color" }
+      ]
+    },
+    {
+      "type": "date",
+      "name": "eventDate",
+      "label": "Event Date",
+      "format": "EEEE d MMMM",
+      "locale": "fr",
+      "replacements": [
+        { "pattern": "lundi 20 novembre", "type": "date", "regex": "(lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)\\s+\\d{1,2}\\s+(novembre|décembre|janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre)", "flags": "gi" }
+      ]
+    },
+    {
+      "type": "time",
+      "name": "doorTime",
+      "label": "Door Time",
+      "format": "24h",
+      "prefix": "Ouverture à ",
+      "default": "18:00",
+      "replacements": [
+        { "pattern": "Ouverture à 18:00", "type": "time" }
+      ]
+    },
+    {
+      "type": "people",
+      "name": "people",
+      "label": "Speakers",
+      "maxCount": 3,
+      "fields": [
+        { "type": "text", "name": "name", "label": "Name", "maxLength": 40, "replacements": [{ "pattern": "Michael Masson", "type": "text" }, { "pattern": "John Doe", "type": "text" }] },
+        { "type": "text", "name": "role", "label": "Role", "maxLength": 60, "replacements": [{ "pattern": "CTO @ Botpress", "type": "text" }, { "pattern": "Graphic Designer @ Botpress", "type": "text" }] },
+        { "type": "text", "name": "talkTitle", "label": "Talk Title", "maxLength": 120, "replacements": [{ "pattern": "Kubernetes the right way: A platform engineering approach to K8s", "type": "text" }, { "pattern": "Lorem Ipsum Dolor Sit", "type": "text" }] },
+        { "type": "image", "name": "headshot", "label": "Headshot", "replacements": [{ "pattern": "assets/speaker-photo.png", "type": "image" }] }
+      ]
+    }
+  ],
+  "assets": {
+    "logo": {
+      "default": "code-@-québec-long.svg",
+      "swap": {}
+    },
+    "decoration": {
+      "file": "decoration.svg",
+      "colorReplacements": ["#3D9DFF"]
+    }
+  },
+  "colorReplacements": {
+    "#B5DAFF": "secondaryColor"
+  },
+  "address": {
+    "venueName": "Botpress HQ",
+    "addressLine": "875 Bd Charest O Suite 200",
+    "cityLine": "Québec City, Quebec G1N 3N8"
+  }
+}
+

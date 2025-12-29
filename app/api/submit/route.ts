@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { lightenColor } from "@/lib/utils";
+import { getTemplateConfig } from "@/lib/template-registry";
 import sharp from "sharp";
 
 export async function POST(req: NextRequest) {
@@ -22,12 +23,14 @@ export async function POST(req: NextRequest) {
     }
     const eventTitle = formData.get("eventTitle") as string;
     const eventDate = new Date(formData.get("eventDate") as string);
+    const templateFamily = (formData.get("templateFamily") as string) || "mtl-code";
+    const doorTime = (formData.get("doorTime") as string) || "18:00";
     
-    // Hardcoded location values (matching template)
-    const venueName = "Botpress HQ";
-    const addressLine = "400 Blvd. De Maisonneuve Ouest";
-    const cityLine = "Montreal, QC  H3A 1L4";
-    const doorTime = (formData.get("doorTime") as string) || "18:00"; // Default to 6:00 PM if not provided
+    // Get address from config
+    const config = await getTemplateConfig(templateFamily);
+    const venueName = config?.address?.venueName || "Botpress HQ";
+    const addressLine = config?.address?.addressLine || "400 Blvd. De Maisonneuve Ouest";
+    const cityLine = config?.address?.cityLine || "Montreal, QC  H3A 1L4";
 
     const peopleCountNum = parseInt(peopleCount);
     const people = [];
@@ -78,7 +81,6 @@ export async function POST(req: NextRequest) {
     }
 
     const secondaryColor = lightenColor(primaryColor, 15);
-    const templateFamily = (formData.get("templateFamily") as string) || "mtl-code";
     const templateVariant = `${templateFamily}-${peopleCount}`;
 
     // Create submission record
