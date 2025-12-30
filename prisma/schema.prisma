@@ -82,3 +82,46 @@ model Submission {
   @@index([createdAt])
 }
 
+// ============================================================================
+// Node Graph Template Storage (Phase 1)
+// ============================================================================
+
+model Template {
+  id          String   @id @default(cuid())
+  family      String   @unique // e.g., "mtl-code", "code-a-quebec"
+  name        String
+  title       String
+  format      String   @default("html") // "node" | "html"
+  version     Int      @default(1) // Schema version for migrations
+  width       Int
+  height      Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Node graph data (stored as JSON)
+  schema      String?  // JSON string of TemplateSchema (for node format)
+  
+  nodes       TemplateNode[]
+  
+  @@index([family])
+  @@index([format])
+}
+
+model TemplateNode {
+  id          String   @id @default(cuid())
+  templateId  String
+  nodeId      String   // ID from node graph
+  type        String   // "text" | "image" | "shape" | "group"
+  data        String   // JSON string of node data
+  parentId    String?  // For nested groups
+  order       Int      // Display order
+  
+  template    Template @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  parent      TemplateNode? @relation("NodeHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children    TemplateNode[] @relation("NodeHierarchy")
+  
+  @@index([templateId])
+  @@index([parentId])
+  @@index([nodeId])
+}
+
