@@ -1,0 +1,236 @@
+{
+  "id": "code-a-quebec-2",
+  "name": "code-a-quebec",
+  "title": "Code @ Québec Event Poster",
+  "version": 1,
+  "dimensions": {
+    "width": 1080,
+    "height": 1350
+  },
+  "nodes": [
+    {
+      "id": "background",
+      "type": "shape",
+      "x": 0,
+      "y": 0,
+      "width": 1080,
+      "height": 1350,
+      "zIndex": 0,
+      "shapeType": "rectangle",
+      "fill": "#F4F4F4"
+    },
+    {
+      "id": "logo",
+      "type": "image",
+      "x": 80,
+      "y": 253.5,
+      "width": 920,
+      "height": 50,
+      "zIndex": 1,
+      "src": "assets/code-@-québec-long.svg",
+      "fit": "contain",
+      "binding": {
+        "field": "logo",
+        "type": "image"
+      }
+    },
+    {
+      "id": "event-title",
+      "type": "text",
+      "x": 80,
+      "y": 427,
+      "width": 920,
+      "height": 50,
+      "zIndex": 2,
+      "content": "Placeholder Text",
+      "fontFamily": "'Aspekta', sans-serif",
+      "fontSize": 50,
+      "fontWeight": 500,
+      "lineHeight": 1.1,
+      "textAlign": "center",
+      "color": "#000000",
+      "binding": {
+        "field": "eventTitle",
+        "type": "text"
+      }
+    },
+    {
+      "id": "date-bg",
+      "type": "shape",
+      "x": 80,
+      "y": 477,
+      "width": 306.67,
+      "height": 264,
+      "zIndex": 3,
+      "shapeType": "rectangle",
+      "fill": "token:primary"
+    },
+    {
+      "id": "date",
+      "type": "text",
+      "x": 120,
+      "y": 517,
+      "width": 226.67,
+      "height": 40,
+      "zIndex": 4,
+      "content": "lundi 20 novembre",
+      "fontFamily": "'Aspekta', sans-serif",
+      "fontSize": 34,
+      "fontWeight": 500,
+      "lineHeight": 1.1,
+      "textAlign": "left",
+      "color": "#F4F4F4",
+      "binding": {
+        "field": "eventDate",
+        "type": "text"
+      }
+    },
+    {
+      "id": "time",
+      "type": "text",
+      "x": 120,
+      "y": 567,
+      "width": 226.67,
+      "height": 30,
+      "zIndex": 5,
+      "content": "Ouverture à 18:00",
+      "fontFamily": "'Aspekta', sans-serif",
+      "fontSize": 25,
+      "fontWeight": 300,
+      "lineHeight": 1.1,
+      "textAlign": "left",
+      "color": "#F4F4F4",
+      "binding": {
+        "field": "doorTime",
+        "type": "text"
+      }
+    },
+    {
+      "id": "address-line-1",
+      "type": "text",
+      "x": 386.67,
+      "y": 517,
+      "width": 226.67,
+      "height": 40,
+      "zIndex": 6,
+      "content": "875 Bd Charest O Suite 200",
+      "fontFamily": "'Aspekta', sans-serif",
+      "fontSize": 34,
+      "fontWeight": 500,
+      "lineHeight": 1.1,
+      "textAlign": "left",
+      "color": "token:primary",
+      "binding": {
+        "field": "addressLine",
+        "type": "text"
+      }
+    },
+    {
+      "id": "address-line-2",
+      "type": "text",
+      "x": 386.67,
+      "y": 567,
+      "width": 226.67,
+      "height": 30,
+      "zIndex": 7,
+      "content": "Québec City, Quebec G1N 3N8",
+      "fontFamily": "'Aspekta', sans-serif",
+      "fontSize": 25,
+      "fontWeight": 300,
+      "lineHeight": 1.1,
+      "textAlign": "left",
+      "color": "token:primary",
+      "binding": {
+        "field": "cityLine",
+        "type": "text"
+      }
+    },
+    {
+      "id": "decoration",
+      "type": "image",
+      "x": 693.33,
+      "y": 482,
+      "width": 306.66,
+      "height": 254,
+      "zIndex": 8,
+      "src": "assets/decoration.svg",
+      "fit": "contain"
+    },
+    {
+      "id": "speaker-bg",
+      "type": "shape",
+      "x": 80,
+      "y": 741,
+      "width": 920,
+      "height": 529,
+      "zIndex": 9,
+      "shapeType": "rectangle",
+      "fill": "token:secondary"
+    },
+    {
+      "id": "speaker-photo",
+      "type": "image",
+      "x": 386.67,
+      "y": 751,
+      "width": 603.33,
+      "height": 509,
+      "zIndex": 10,
+      "src": "assets/speaker-photo.png",
+      "fit": "cover",
+      "binding": {
+        "field": "people[0].headshot",
+        "type": "image"
+      }
+    }
+  ],
+  "tokens": {
+    "primary": {
+      "name": "primary",
+      "default": "#3D9DFF",
+      "editable": true
+    },
+    "secondary": {
+      "name": "secondary",
+      "default": "#B5DAFF",
+      "editable": true
+    }
+  },
+  "variants": [],
+  "bindings": [
+    {
+      "nodeId": "logo",
+      "field": "logo",
+      "type": "image"
+    },
+    {
+      "nodeId": "event-title",
+      "field": "eventTitle",
+      "type": "text"
+    },
+    {
+      "nodeId": "date",
+      "field": "eventDate",
+      "type": "text"
+    },
+    {
+      "nodeId": "time",
+      "field": "doorTime",
+      "type": "text"
+    },
+    {
+      "nodeId": "address-line-1",
+      "field": "addressLine",
+      "type": "text"
+    },
+    {
+      "nodeId": "address-line-2",
+      "field": "cityLine",
+      "type": "text"
+    },
+    {
+      "nodeId": "speaker-photo",
+      "field": "people[0].headshot",
+      "type": "image"
+    }
+  ]
+}

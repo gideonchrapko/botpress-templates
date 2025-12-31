@@ -12,17 +12,35 @@ const schemaCache: Map<string, TemplateSchema> = new Map();
 
 /**
  * Load a node graph template schema from the database or file system
+ * Supports both schema.json (unified) and schema-layout-{variant}.json (variant-specific)
  */
 export async function getNodeTemplateSchema(
-  templateId: string
+  templateId: string,
+  variantId?: string
 ): Promise<TemplateSchema | null> {
+  const cacheKey = variantId ? `${templateId}-${variantId}` : templateId;
+  
   // Check cache first
-  if (schemaCache.has(templateId)) {
-    return schemaCache.get(templateId)!;
+  if (schemaCache.has(cacheKey)) {
+    return schemaCache.get(cacheKey)!;
   }
 
-  // For Phase 1, we'll load from file system
-  // Later, this will load from database
+  // Try variant-specific layout schema first (schema-layout-{variant}.json)
+  if (variantId) {
+    const variantSchemaPath = join(process.cwd(), "templates", templateId, `schema-layout-${variantId}.json`);
+    if (existsSync(variantSchemaPath)) {
+      try {
+        const schemaContent = await readFile(variantSchemaPath, "utf-8");
+        const schema = JSON.parse(schemaContent) as TemplateSchema;
+        schemaCache.set(cacheKey, schema);
+        return schema;
+      } catch {
+        // Fall through to unified schema
+      }
+    }
+  }
+
+  // Try unified schema.json
   const schemaPath = join(process.cwd(), "templates", templateId, "schema.json");
   
   if (!existsSync(schemaPath)) {
@@ -32,7 +50,7 @@ export async function getNodeTemplateSchema(
   try {
     const schemaContent = await readFile(schemaPath, "utf-8");
     const schema = JSON.parse(schemaContent) as TemplateSchema;
-    schemaCache.set(templateId, schema);
+    schemaCache.set(cacheKey, schema);
     return schema;
   } catch {
     return null;
@@ -41,11 +59,19 @@ export async function getNodeTemplateSchema(
 
 /**
  * Get template format (node or html)
- * For Phase 1, checks if schema.json exists (node) or template-*.html exists (html)
+ * Checks for schema.json, schema-layout-*.json (node) or template-*.html (html)
  */
-export async function getTemplateFormat(templateFamily: string): Promise<TemplateFormat> {
-  const schemaPath = join(process.cwd(), "templates", templateFamily, "schema.json");
+export async function getTemplateFormat(templateFamily: string, variantId?: string): Promise<TemplateFormat> {
+  // Check for variant-specific layout schema
+  if (variantId) {
+    const variantSchemaPath = join(process.cwd(), "templates", templateFamily, `schema-layout-${variantId}.json`);
+    if (existsSync(variantSchemaPath)) {
+      return "node";
+    }
+  }
   
+  // Check for unified schema
+  const schemaPath = join(process.cwd(), "templates", templateFamily, "schema.json");
   if (existsSync(schemaPath)) {
     return "node";
   }
