@@ -1,6 +1,6 @@
 import { Submission } from "@prisma/client";
 import { renderTemplateWithConfig } from "@/lib/template-engine";
-import { isNodeTemplate, getNodeTemplateSchema } from "@/lib/node-registry";
+import { getTemplateFormat, getNodeTemplateSchema } from "@/lib/node-registry";
 import { compileNodeGraphToHTML } from "@/lib/node-to-html-compiler";
 import { getTemplateConfig } from "@/lib/template-registry";
 import { TemplateSchema } from "@/lib/node-types";
@@ -22,39 +22,44 @@ export function getPosterDimensions(scale: number) {
 }
 
 /**
- * Render template - supports both node graphs and legacy HTML
- * Phase 1: Dual-format support
+ * Render template - Hybrid system supporting both node graphs and HTML
+ * 
+ * Routing logic:
+ * 1. Check config.json for explicit format setting
+ * 2. If format is "node", use node renderer (with HTML fallback on error)
+ * 3. If format is "html" or undefined, use HTML renderer
+ * 4. Auto-detect based on file presence if format not specified
  */
 export async function renderTemplate(submission: Submission): Promise<string> {
   // Extract variant from templateVariant (e.g., "mtl-code-1" -> "1")
   const variantId = submission.templateVariant.split("-").pop() || undefined;
 
-  // Check if template uses node graph format (with variant support)
-  const usesNodeGraph = await isNodeTemplate(submission.templateFamily);
+  // Get template format (checks config.json first, then file presence)
+  const format = await getTemplateFormat(submission.templateFamily, variantId);
   
-  // Try to load node schema (with fallback to HTML)
-  let schema = null;
-  if (usesNodeGraph) {
-    schema = await getNodeTemplateSchema(submission.templateFamily, variantId);
-  }
-
-  if (schema) {
-    try {
-      // Render using node graph compiler
-      const nodeHTML = await renderNodeTemplate(submission, schema, variantId);
-      // TODO: Remove this fallback once node renderer is fixed
-      // For now, always use legacy HTML due to layout issues
-      console.warn("Node template render completed, but using legacy HTML due to layout issues");
-      return renderTemplateWithConfig(submission);
-    } catch (error) {
-      console.error("Node template render failed, falling back to HTML:", error);
-      // Fall back to legacy HTML template engine
+  // If format is explicitly "node", try node renderer first
+  if (format === "node") {
+    const schema = await getNodeTemplateSchema(submission.templateFamily, variantId);
+    
+    if (schema) {
+      try {
+        // Render using node graph compiler
+        const nodeHTML = await renderNodeTemplate(submission, schema, variantId);
+        return nodeHTML;
+      } catch (error) {
+        console.error("Node template render failed, falling back to HTML:", error);
+        // Fall back to HTML renderer on error
+        return renderTemplateWithConfig(submission);
+      }
+    } else {
+      // Schema not found, fall back to HTML
+      console.warn(`Node schema not found for ${submission.templateFamily}, falling back to HTML`);
       return renderTemplateWithConfig(submission);
     }
-  } else {
-    // Render using legacy HTML template engine
-    return renderTemplateWithConfig(submission);
   }
+  
+  // Format is "html" or undefined - use HTML renderer
+  return renderTemplateWithConfig(submission);
 }
 
 /**

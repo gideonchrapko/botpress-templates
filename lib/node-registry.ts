@@ -1,12 +1,17 @@
 /**
  * Node Graph Template Registry
- * Phase 1: Dual-format support (node graphs + legacy HTML)
+ * Hybrid system: Supports both node graphs and HTML templates
+ * Format is determined by:
+ * 1. Explicit config.json format field (highest priority)
+ * 2. File presence (schema-layout-*.json or schema.json = node, template-*.html = html)
+ * 3. Default to "html" for backwards compatibility
  */
 
 import { readFile } from "fs/promises";
 import { join } from "path";
 import { existsSync } from "fs";
 import { TemplateSchema, TemplateFormat } from "./node-types";
+import { getTemplateConfig } from "./template-registry";
 
 const schemaCache: Map<string, TemplateSchema> = new Map();
 
@@ -59,10 +64,16 @@ export async function getNodeTemplateSchema(
 
 /**
  * Get template format (node or html)
- * Checks for schema.json, schema-layout-*.json (node) or template-*.html (html)
+ * Hybrid system: Checks config.json first, then file presence, then defaults to html
  */
 export async function getTemplateFormat(templateFamily: string, variantId?: string): Promise<TemplateFormat> {
-  // Check for variant-specific layout schema
+  // Priority 1: Check config.json for explicit format setting
+  const config = await getTemplateConfig(templateFamily);
+  if (config?.format) {
+    return config.format;
+  }
+  
+  // Priority 2: Check for variant-specific layout schema
   if (variantId) {
     const variantSchemaPath = join(process.cwd(), "templates", templateFamily, `schema-layout-${variantId}.json`);
     if (existsSync(variantSchemaPath)) {
@@ -70,19 +81,19 @@ export async function getTemplateFormat(templateFamily: string, variantId?: stri
     }
   }
   
-  // Check for unified schema
+  // Priority 3: Check for unified schema
   const schemaPath = join(process.cwd(), "templates", templateFamily, "schema.json");
   if (existsSync(schemaPath)) {
     return "node";
   }
   
-  // Check if HTML template exists (legacy)
+  // Priority 4: Check if HTML template exists
   const template1Path = join(process.cwd(), "templates", templateFamily, "template-1.html");
   if (existsSync(template1Path)) {
     return "html";
   }
   
-  // Default to html for backwards compatibility
+  // Priority 5: Default to html for backwards compatibility
   return "html";
 }
 
