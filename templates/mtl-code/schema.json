@@ -1,0 +1,348 @@
+{
+  "id": "mtl-code",
+  "name": "mtl-code",
+  "title": "MTL Code Event Poster",
+  "version": 1,
+  "dimensions": {
+    "width": 1080,
+    "height": 1350
+  },
+  "nodes": [
+    {
+      "id": "background",
+      "type": "shape",
+      "x": 0,
+      "y": 0,
+      "width": 1080,
+      "height": 1350,
+      "zIndex": 0,
+      "shapeType": "rectangle",
+      "fill": "#F4F4F4"
+    },
+    {
+      "id": "logo",
+      "type": "image",
+      "x": 80,
+      "y": 253.5,
+      "width": 920,
+      "height": 50,
+      "zIndex": 1,
+      "src": "assets/mtl-code-wide.svg",
+      "fit": "contain",
+      "binding": {
+        "field": "logo",
+        "type": "image"
+      }
+    },
+    {
+      "id": "event-title",
+      "type": "text",
+      "x": 80,
+      "y": 427,
+      "width": 920,
+      "height": 50,
+      "zIndex": 2,
+      "content": "Placeholder Text",
+      "fontFamily": "'Aspekta', sans-serif",
+      "fontSize": 50,
+      "fontWeight": 500,
+      "lineHeight": 1.1,
+      "textAlign": "center",
+      "color": "#000000",
+      "binding": {
+        "field": "eventTitle",
+        "type": "text"
+      }
+    },
+    {
+      "id": "date-bg",
+      "type": "shape",
+      "x": 80,
+      "y": 477,
+      "width": 306.67,
+      "height": 264,
+      "zIndex": 3,
+      "shapeType": "rectangle",
+      "fill": "token:primary"
+    },
+    {
+      "id": "date",
+      "type": "text",
+      "x": 120,
+      "y": 517,
+      "width": 226.67,
+      "height": 40,
+      "zIndex": 4,
+      "content": "Thursday, November 20",
+      "fontFamily": "'Aspekta', sans-serif",
+      "fontSize": 34,
+      "fontWeight": 500,
+      "lineHeight": 1.1,
+      "textAlign": "left",
+      "color": "#F4F4F4",
+      "binding": {
+        "field": "eventDate",
+        "type": "text"
+      }
+    },
+    {
+      "id": "time",
+      "type": "text",
+      "x": 120,
+      "y": 567,
+      "width": 226.67,
+      "height": 30,
+      "zIndex": 5,
+      "content": "Doors open @ 6:00PM",
+      "fontFamily": "'Aspekta', sans-serif",
+      "fontSize": 25,
+      "fontWeight": 300,
+      "lineHeight": 1.1,
+      "textAlign": "left",
+      "color": "#F4F4F4",
+      "binding": {
+        "field": "doorTime",
+        "type": "text"
+      }
+    },
+    {
+      "id": "address-line-1",
+      "type": "text",
+      "x": 386.67,
+      "y": 517,
+      "width": 226.67,
+      "height": 40,
+      "zIndex": 6,
+      "content": "400 Blvd. De Maisonneuve Ouest",
+      "fontFamily": "'Aspekta', sans-serif",
+      "fontSize": 34,
+      "fontWeight": 500,
+      "lineHeight": 1.1,
+      "textAlign": "left",
+      "color": "token:primary",
+      "binding": {
+        "field": "addressLine",
+        "type": "text"
+      }
+    },
+    {
+      "id": "address-line-2",
+      "type": "text",
+      "x": 386.67,
+      "y": 567,
+      "width": 226.67,
+      "height": 30,
+      "zIndex": 7,
+      "content": "Montreal, QC  H3A 1L4",
+      "fontFamily": "'Aspekta', sans-serif",
+      "fontSize": 25,
+      "fontWeight": 300,
+      "lineHeight": 1.1,
+      "textAlign": "left",
+      "color": "token:primary",
+      "binding": {
+        "field": "cityLine",
+        "type": "text"
+      }
+    },
+    {
+      "id": "decoration",
+      "type": "image",
+      "x": 693.33,
+      "y": 482,
+      "width": 306.66,
+      "height": 254,
+      "zIndex": 8,
+      "src": "assets/decoration.svg",
+      "fit": "contain"
+    },
+    {
+      "id": "speaker-bg",
+      "type": "shape",
+      "x": 80,
+      "y": 741,
+      "width": 920,
+      "height": 529,
+      "zIndex": 9,
+      "shapeType": "rectangle",
+      "fill": "token:secondary"
+    },
+    {
+      "id": "speaker-name",
+      "type": "text",
+      "x": 120,
+      "y": 791,
+      "width": 226.67,
+      "height": 40,
+      "zIndex": 10,
+      "content": "Michael Masson",
+      "fontFamily": "'Aspekta', sans-serif",
+      "fontSize": 34,
+      "fontWeight": 500,
+      "lineHeight": 1.1,
+      "textAlign": "left",
+      "color": "#000000",
+      "binding": {
+        "field": "people[0].name",
+        "type": "text"
+      }
+    },
+    {
+      "id": "speaker-role",
+      "type": "text",
+      "x": 120,
+      "y": 841,
+      "width": 226.67,
+      "height": 30,
+      "zIndex": 11,
+      "content": "CTO @ Botpress",
+      "fontFamily": "'Aspekta', sans-serif",
+      "fontSize": 25,
+      "fontWeight": 300,
+      "lineHeight": 1.1,
+      "textAlign": "left",
+      "color": "#000000",
+      "binding": {
+        "field": "people[0].role",
+        "type": "text"
+      }
+    },
+    {
+      "id": "talk-title",
+      "type": "text",
+      "x": 120,
+      "y": 906,
+      "width": 226.67,
+      "height": 200,
+      "zIndex": 12,
+      "content": "Kubernetes the right way: A platform engineering approach to K8s",
+      "fontFamily": "'Aspekta', sans-serif",
+      "fontSize": 34,
+      "fontWeight": 500,
+      "lineHeight": 1.1,
+      "textAlign": "left",
+      "color": "#000000",
+      "binding": {
+        "field": "people[0].talkTitle",
+        "type": "text"
+      }
+    },
+    {
+      "id": "speaker-photo",
+      "type": "image",
+      "x": 396.67,
+      "y": 751,
+      "width": 593.33,
+      "height": 489,
+      "zIndex": 13,
+      "src": "assets/speaker-photo.png",
+      "fit": "cover",
+      "binding": {
+        "field": "people[0].headshot",
+        "type": "image"
+      }
+    }
+  ],
+  "tokens": {
+    "primary": {
+      "name": "primary",
+      "default": "#3D9DFF",
+      "editable": true
+    },
+    "secondary": {
+      "name": "secondary",
+      "default": "#B5DAFF",
+      "editable": true
+    }
+  },
+  "variants": [
+    {
+      "id": "2",
+      "name": "Variant 2",
+      "overrides": [
+        {
+          "nodeId": "speaker-name",
+          "operation": "hide"
+        },
+        {
+          "nodeId": "speaker-role",
+          "operation": "hide"
+        },
+        {
+          "nodeId": "talk-title",
+          "operation": "hide"
+        }
+      ]
+    },
+    {
+      "id": "3",
+      "name": "Variant 3",
+      "overrides": [
+        {
+          "nodeId": "speaker-name",
+          "operation": "hide"
+        },
+        {
+          "nodeId": "speaker-role",
+          "operation": "hide"
+        },
+        {
+          "nodeId": "talk-title",
+          "operation": "hide"
+        }
+      ]
+    }
+  ],
+  "bindings": [
+    {
+      "nodeId": "logo",
+      "field": "logo",
+      "type": "image"
+    },
+    {
+      "nodeId": "event-title",
+      "field": "eventTitle",
+      "type": "text"
+    },
+    {
+      "nodeId": "date",
+      "field": "eventDate",
+      "type": "text"
+    },
+    {
+      "nodeId": "time",
+      "field": "doorTime",
+      "type": "text"
+    },
+    {
+      "nodeId": "address-line-1",
+      "field": "addressLine",
+      "type": "text"
+    },
+    {
+      "nodeId": "address-line-2",
+      "field": "cityLine",
+      "type": "text"
+    },
+    {
+      "nodeId": "speaker-name",
+      "field": "people[0].name",
+      "type": "text"
+    },
+    {
+      "nodeId": "speaker-role",
+      "field": "people[0].role",
+      "type": "text"
+    },
+    {
+      "nodeId": "talk-title",
+      "field": "people[0].talkTitle",
+      "type": "text"
+    },
+    {
+      "nodeId": "speaker-photo",
+      "field": "people[0].headshot",
+      "type": "image"
+    }
+  ]
+}

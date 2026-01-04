@@ -6,11 +6,12 @@
 
 ## 🎯 Core Architecture Principle
 
-**Nodes are the source of truth. HTML is compiled output.**
+**Hybrid System: Use the right tool for each template.**
 
-- **Template Format**: Node graphs (from Figma/Illustrator or manually created)
-- **Rendering Format**: HTML (compiled from nodes for Puppeteer)
-- **Legacy Support**: HTML templates work temporarily during migration
+- **Template Format**: Node graphs OR HTML templates (explicit choice per template)
+- **Rendering Format**: HTML (compiled from nodes OR direct HTML for Puppeteer)
+- **HTML Templates**: First-class citizens (not deprecated, use for complex/long-format)
+- **Node Graphs**: Use for simple posters, programmatic templates, Figma imports
 - **Future**: Long-format content support (documents, multi-page layouts)
 
 ---
@@ -18,8 +19,8 @@
 ## 📊 Timeline Overview
 
 ```
-Phase 1: Foundation          [████████░░] Weeks 1-4
-Phase 2: Convert Templates   [████░░░░░░] Weeks 5-6
+Phase 1: Foundation          [██████████] Weeks 1-4 ✅ COMPLETE
+Phase 2: Convert Templates   [██░░░░░░░░] Weeks 5-6 ⚠️ OPTIONAL (selective conversion)
 Phase 3: Design Tool Import  [████████████] Weeks 7-12
 Phase 4: Variants            [████░░░░░░] Weeks 13-14
 Phase 5: Tokens              [████░░░░░░] Weeks 15-16
@@ -29,6 +30,7 @@ Phase 8: Long-Format Content [████████░░] Weeks 21-24
 ```
 
 **Total Timeline**: 24 weeks (~6 months)
+**Note**: Phase 2 is now optional - convert templates selectively based on need
 
 ---
 
@@ -40,47 +42,55 @@ Phase 8: Long-Format Content [████████░░] Weeks 21-24
 
 ### Tasks
 
-- [ ] Create `TemplateNode` interface (TypeScript types)
-  - [ ] **Basic node types only** (start simple):
-    - [ ] Text nodes (basic: content, position, size, binding)
-    - [ ] Image nodes (basic: src, position, size, fit mode)
-    - [ ] Shape nodes (basic: rectangles, circles)
-    - [ ] Group nodes (basic: containers with children)
+- [x] Create `TemplateNode` interface (TypeScript types) ✅
+  - [x] **Basic node types only** (start simple):
+    - [x] Text nodes (basic: content, position, size, binding)
+    - [x] Image nodes (basic: src, position, size, fit mode)
+    - [x] Shape nodes (basic: rectangles, circles)
+    - [x] Group nodes (basic: containers with children)
+    - [x] Frame nodes (root container)
+    - [x] Flex nodes (flexbox layout)
+    - [x] Box nodes (block containers)
+    - [x] SVG nodes (for masked images)
   - [ ] **Skip for now** (add later):
     - [ ] Advanced text properties (shadows, gradients, animations)
     - [ ] Advanced image properties (masks, focal points)
     - [ ] Complex shapes (paths, custom)
     - [ ] Video/chart nodes (add when needed)
-- [ ] Create `TemplateSchema` interface (core structure)
-  - [ ] Node graph structure (tree-based)
-  - [ ] Basic variant override definitions (hide/show only)
-  - [ ] Basic token definitions (colors only - spacing/typography later)
-  - [ ] Basic binding definitions (simple field mappings)
+- [x] Create `TemplateSchema` interface (core structure) ✅
+  - [x] Node graph structure (tree-based)
+  - [x] Basic variant override definitions (hide/show only)
+  - [x] Basic token definitions (colors only - spacing/typography later)
+  - [x] Basic binding definitions (simple field mappings)
   - [ ] **Skip for now** (add later):
     - [ ] Complex variant actions (animate, resize, recolor)
     - [ ] Advanced tokens (spacing, typography, shadows)
     - [ ] Complex bindings (computed, conditional, arrays)
-- [ ] Build node-to-HTML compiler (`lib/node-to-html-compiler.ts`)
-  - [ ] Converts node graph → HTML string
-  - [ ] Handles basic layout (absolute positioning)
-  - [ ] Generates CSS for positioning
-  - [ ] Outputs HTML compatible with current Puppeteer pipeline
+- [x] Build node-to-HTML compiler (`lib/node-to-html-compiler-v2.ts`) ✅
+  - [x] Converts node graph → HTML string
+  - [x] Handles basic layout (absolute positioning)
+  - [x] Handles flexbox layouts (FlexNode, BoxNode)
+  - [x] Generates CSS for positioning
+  - [x] Outputs HTML compatible with current Puppeteer pipeline
   - [ ] **Skip for now** (add later):
-    - [ ] Flexbox/grid layouts
+    - [ ] Grid layouts
     - [ ] Auto-flow layouts
     - [ ] Responsive breakpoints
-- [ ] Create dual-format template registry
-  - [ ] Supports both node graphs and legacy HTML
-  - [ ] Detects template type automatically
-  - [ ] Routes to appropriate renderer
-- [ ] Create node graph storage (database schema)
-  - [ ] `Template` table with `format` field (node | html)
-  - [ ] `TemplateNode` table for node graphs
-  - [ ] Schema versioning (for future migrations)
-  - [ ] Migration path from HTML to nodes
-- [ ] Build schema registry (`lib/schema-registry.ts`)
-- [ ] Test compiler with sample node graph (simple test case)
-- [ ] Keep current HTML templates working (backwards compatibility)
+- [x] Create dual-format template registry ✅
+  - [x] Supports both node graphs and HTML (hybrid system)
+  - [x] Detects template type automatically
+  - [x] Routes to appropriate renderer
+  - [x] Explicit format selection via config.json
+- [x] Create node graph storage (database schema) ✅
+  - [x] `Template` table with `format` field (node | html)
+  - [x] `TemplateNode` table for node graphs
+  - [x] Schema versioning (for future migrations)
+  - [x] Migration path from HTML to nodes (converter exists)
+- [x] Build schema registry (`lib/node-registry.ts`) ✅
+- [x] Test compiler with sample node graph ✅
+  - [x] Schema files created (schema.json, schema-layout-*.json)
+  - [x] Test templates exist
+- [x] Keep current HTML templates working (backwards compatibility) ✅
 
 ### Design Principles Applied
 
@@ -91,11 +101,11 @@ Phase 8: Long-Format Content [████████░░] Weeks 21-24
 
 ### Your Role
 
-- [ ] Review node graph structure (does it make sense for your designs?)
-- [ ] Test that current HTML templates still work (no regression)
-- [ ] Review compiler output (does HTML look correct?)
+- [x] Review node graph structure (does it make sense for your designs?) ✅
+- [x] Test that current HTML templates still work (no regression) ✅
+- [x] Review compiler output (does HTML look correct?) ✅
+- [x] Hybrid system implemented and working ✅
 - [ ] **Don't worry about** advanced features yet (they'll come later)
-- [ ] Provide feedback on any UI changes
 
 ### Deliverables
 
@@ -117,34 +127,34 @@ Phase 8: Long-Format Content [████████░░] Weeks 21-24
 
 **Why**: Start simple, prove the concept, extend later. This keeps Phase 1 focused and achievable.
 
-### Status: 🔵 Not Started
+### Status: 🟢 Complete (Hybrid system implemented)
 
 ---
 
-## 🔄 Phase 2: Convert Existing Templates (Weeks 5-6)
+## 🔄 Phase 2: Convert Templates (Optional - Weeks 5-6)
 
-**Goal**: Convert your current HTML templates to node graphs
+**Goal**: Selectively convert HTML templates to node graphs when it adds value
+
+**⚠️ IMPORTANT**: This phase is now **OPTIONAL**. With the hybrid system:
+- HTML templates remain first-class citizens
+- Convert only when node graphs provide clear benefits
+- No pressure to migrate everything
 
 ### Tasks
 
-- [ ] Create HTML → Node graph converter tool
-  - [ ] Parses HTML structure
-  - [ ] Extracts positions, styles, text
-  - [ ] Creates node graph representation
-  - [ ] Preserves bindings (field mappings)
-- [ ] Convert `mtl-code` template to node graph
-  - [ ] All 3 variants (1, 2, 3 speakers)
-  - [ ] Preserve exact layout
-  - [ ] Preserve all bindings
-- [ ] Convert `code-a-quebec` template to node graph
-  - [ ] All 3 variants
-  - [ ] Preserve exact layout
-  - [ ] Preserve all bindings
-- [ ] Test converted templates render identically
+- [x] Create HTML → Node graph converter tool ✅
+  - [x] Parses HTML structure (using parse5)
+  - [x] Extracts positions, styles, text
+  - [x] Creates node graph representation (FrameNode, FlexNode, BoxNode, etc.)
+  - [x] Preserves bindings (field mappings)
+- [ ] Convert templates selectively (as needed)
+  - [ ] Convert simple posters that benefit from node graphs
+  - [ ] Keep HTML for complex/long-format templates
+  - [ ] Test converted templates render identically
   - [ ] Visual comparison (pixel-perfect)
   - [ ] Functional comparison (all fields work)
-- [ ] Update template registry to prefer node graphs
-- [ ] Mark HTML templates as "legacy" (deprecation path)
+- [x] Hybrid system supports both formats ✅
+- [ ] ~~Mark HTML templates as "legacy"~~ ❌ REMOVED - HTML templates are first-class
 
 ### Your Role
 
@@ -156,12 +166,15 @@ Phase 8: Long-Format Content [████████░░] Weeks 21-24
 
 ### Deliverables
 
-- ✅ Both templates converted to node graphs
-- ✅ Templates render identically to HTML versions
-- ✅ No user-facing changes
-- ✅ Node graphs are now source of truth for these templates
+- ✅ HTML → Node converter tool exists
+- ✅ Hybrid system supports both formats
+- [ ] Templates converted selectively (as needed)
+- [ ] Converted templates render identically to HTML versions
+- ✅ No forced migration - HTML templates remain first-class
 
-### Status: 🔵 Not Started
+### Status: 🟡 Optional/Partial (Converter exists, selective conversion)
+
+**Note**: Phase 2 is now optional. Convert templates selectively when node graphs add value. HTML templates remain first-class.
 
 ### Dependencies
 
@@ -543,8 +556,8 @@ Phase 8: Long-Format Content [████████░░] Weeks 21-24
 
 | Phase | Status | Progress | Week | Approach |
 |-------|--------|----------|------|----------|
-| Phase 1: Foundation | 🔵 Not Started | 0% | 1-4 | **Start Simple** - Core only |
-| Phase 2: Convert Templates | 🔵 Not Started | 0% | 5-6 | Convert existing templates |
+| Phase 1: Foundation | 🟢 Complete | 100% | 1-4 | **Hybrid system implemented** ✅ |
+| Phase 2: Convert Templates | 🟡 Optional | 30% | 5-6 | **Selective conversion** - Convert when it adds value |
 | Phase 3: Design Tool Import | 🔵 Not Started | 0% | 7-12 | Figma + Illustrator |
 | Phase 4: Variants | 🔵 Not Started | 0% | 13-14 | **Start Simple** - Hide/show only |
 | Phase 5: Tokens | 🔵 Not Started | 0% | 15-16 | **Start Simple** - Colors only |
@@ -570,11 +583,13 @@ Phase 8: Long-Format Content [████████░░] Weeks 21-24
 - [ ] Current templates still work (no regression)
 - [ ] System ready for extension (optional properties, union types)
 
-### Milestone 2: Templates Converted
-**Target**: End of Week 6
-- [ ] Both templates converted to node graphs
+### Milestone 2: Hybrid System Working
+**Target**: End of Week 6 (or ongoing)
+- [x] Hybrid system implemented ✅
+- [x] Both formats supported ✅
+- [ ] Templates converted selectively (as needed)
 - [ ] No regression in functionality
-- [ ] Node graphs are source of truth
+- [ ] Choose format per template based on needs
 
 ### Milestone 3: Design Import Working
 **Target**: End of Week 12
@@ -631,20 +646,28 @@ Phase 8: Long-Format Content [████████░░] Weeks 21-24
 └─────────────────────────────────────┘
 ```
 
-### Dual-Format Support (During Migration)
+### Hybrid System Architecture
 
 ```
 Template Registry
-├── Node Graph Templates (new)
-│   ├── Source: Node graph
+├── Node Graph Templates
+│   ├── Source: Node graph (schema.json or schema-layout-*.json)
 │   ├── Render: Compile to HTML → Puppeteer
-│   ├── Status: Active
+│   ├── Status: First-class (use for simple posters, programmatic templates)
+│   ├── Config: format: "node" in config.json
 │   └── Features: Start simple, extend later
-└── HTML Templates (legacy)
-    ├── Source: HTML file
+└── HTML Templates
+    ├── Source: HTML file (template-*.html)
     ├── Render: Direct → Puppeteer
-    └── Status: Deprecated (will be converted)
+    ├── Status: First-class (use for complex/long-format content)
+    └── Config: format: "html" or omit (defaults to HTML)
 ```
+
+**Key Points**:
+- Both formats are **first-class citizens** (not deprecated)
+- Choose format per template based on needs
+- Hybrid system routes to correct renderer automatically
+- No forced migration - convert selectively
 
 ### Evolution Path
 
@@ -835,11 +858,13 @@ The migration is successful when:
 - Assets: Cloud storage
 - Long-format: Multi-page node graphs
 
-**During Migration**:
-- Both formats supported
-- New templates = node graphs
-- Legacy templates = HTML (deprecated)
-- Gradual conversion
+**Hybrid System (Current)**:
+- Both formats supported as first-class citizens
+- New templates = choose format based on needs
+  - Simple posters → node graphs
+  - Complex/long-format → HTML
+- Existing templates = keep as HTML (unless converting adds value)
+- Selective conversion (no forced migration)
 
 ---
 

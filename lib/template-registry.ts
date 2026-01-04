@@ -29,6 +29,11 @@ export interface TemplateConfig {
   height: number;
   variants: string[];
   fields: TemplateField[];
+  // Hybrid system: Explicit format selection
+  // "node" = use node graph renderer (good for simple posters with fixed layouts)
+  // "html" = use HTML template renderer (good for long-format content, dynamic text)
+  // undefined = auto-detect based on file presence (defaults to "html" for backwards compatibility)
+  format?: "node" | "html";
   assets: {
     logo: {
       default: string;

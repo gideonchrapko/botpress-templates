@@ -1,0 +1,472 @@
+{
+  "id": "mtl-code-1",
+  "name": "mtl-code",
+  "title": "MTL Code Event Poster",
+  "version": 2,
+  "dimensions": {
+    "width": 1080,
+    "height": 1350
+  },
+  "root": {
+    "id": "root",
+    "type": "frame",
+    "width": 1080,
+    "height": 1350,
+    "padding": 80,
+    "backgroundColor": "#F4F4F4",
+    "overflow": "hidden",
+    "boxSizing": "border-box",
+    "children": [
+      {
+        "id": "flex-3",
+        "type": "flex",
+        "width": 920,
+        "height": 397,
+        "flexDirection": "column",
+        "justifyContent": "center",
+        "alignItems": "center",
+        "backgroundColor": "#F4F4F4",
+        "boxSizing": "border-box",
+        "children": [
+          {
+            "id": "image-0",
+            "type": "image",
+            "width": 920,
+            "height": null,
+            "src": "assets/mtl-code-wide.svg",
+            "fit": "contain",
+            "display": "block",
+            "binding": {
+              "field": "logo",
+              "type": "image"
+            }
+          },
+          {
+            "id": "flex-2",
+            "type": "flex",
+            "width": 920,
+            "height": 50,
+            "flexDirection": "column",
+            "justifyContent": "center",
+            "alignItems": "center",
+            "boxSizing": "border-box",
+            "children": [
+              {
+                "id": "text-1",
+                "type": "text",
+                "width": 920,
+                "height": 50,
+                "content": "Placeholder Text",
+                "fontFamily": "Aspekta, sans-serif",
+                "fontSize": 50,
+                "fontWeight": 500,
+                "lineHeight": 1.1,
+                "textAlign": "left",
+                "color": "#000000",
+                "binding": {
+                  "field": "eventTitle",
+                  "type": "text"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "box-26",
+        "type": "box",
+        "width": 920,
+        "height": 793,
+        "boxSizing": "border-box",
+        "children": [
+          {
+            "id": "flex-16",
+            "type": "flex",
+            "width": 920,
+            "height": 264,
+            "flexDirection": "row",
+            "justifyContent": "flex-start",
+            "alignItems": "stretch",
+            "boxSizing": "border-box",
+            "children": [
+              {
+                "id": "flex-8",
+                "type": "flex",
+                "width": 306.67,
+                "height": 264,
+                "flexDirection": "column",
+                "justifyContent": "flex-start",
+                "alignItems": "flex-start",
+                "padding": 40,
+                "backgroundColor": "#3D9DFF",
+                "boxSizing": "border-box",
+                "children": [
+                  {
+                    "id": "flex-5",
+                    "type": "flex",
+                    "width": 306.67,
+                    "height": 264,
+                    "flexDirection": "column",
+                    "justifyContent": "flex-start",
+                    "alignItems": "flex-start",
+                    "boxSizing": "border-box",
+                    "children": [
+                      {
+                        "id": "text-4",
+                        "type": "text",
+                        "width": 306.67,
+                        "height": 264,
+                        "content": "Thursday, November 20",
+                        "fontFamily": "Aspekta, sans-serif",
+                        "fontSize": 34,
+                        "fontWeight": 500,
+                        "lineHeight": 1.1,
+                        "textAlign": "left",
+                        "color": "#F4F4F4",
+                        "marginBottom": 10,
+                        "binding": {
+                          "field": "eventDate",
+                          "type": "text"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "id": "flex-7",
+                    "type": "flex",
+                    "width": 306.67,
+                    "height": 264,
+                    "flexDirection": "column",
+                    "justifyContent": "flex-start",
+                    "alignItems": "flex-start",
+                    "boxSizing": "border-box",
+                    "children": [
+                      {
+                        "id": "text-6",
+                        "type": "text",
+                        "width": 306.67,
+                        "height": 264,
+                        "content": "Doors open @ 6:00PM",
+                        "fontFamily": "Aspekta, sans-serif",
+                        "fontSize": 25,
+                        "fontWeight": 300,
+                        "lineHeight": 1.1,
+                        "textAlign": "left",
+                        "color": "#F4F4F4",
+                        "binding": {
+                          "field": "doorTime",
+                          "type": "text"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": "flex-13",
+                "type": "flex",
+                "width": 306.67,
+                "height": 264,
+                "flexDirection": "column",
+                "justifyContent": "flex-start",
+                "alignItems": "flex-start",
+                "padding": 40,
+                "backgroundColor": "#F4F4F4",
+                "boxSizing": "border-box",
+                "children": [
+                  {
+                    "id": "flex-10",
+                    "type": "flex",
+                    "width": 306.67,
+                    "height": 264,
+                    "flexDirection": "column",
+                    "justifyContent": "flex-start",
+                    "alignItems": "flex-start",
+                    "boxSizing": "border-box",
+                    "children": [
+                      {
+                        "id": "text-9",
+                        "type": "text",
+                        "width": 306.67,
+                        "height": 264,
+                        "content": "400 Blvd. De Maisonneuve Ouest",
+                        "fontFamily": "Aspekta, sans-serif",
+                        "fontSize": 34,
+                        "fontWeight": 500,
+                        "lineHeight": 1.1,
+                        "textAlign": "left",
+                        "color": "#3D9DFF",
+                        "marginBottom": 10,
+                        "binding": {
+                          "field": "addressLine",
+                          "type": "text"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "id": "flex-12",
+                    "type": "flex",
+                    "width": 306.67,
+                    "height": 264,
+                    "flexDirection": "column",
+                    "justifyContent": "flex-start",
+                    "alignItems": "flex-start",
+                    "boxSizing": "border-box",
+                    "children": [
+                      {
+                        "id": "text-11",
+                        "type": "text",
+                        "width": 306.67,
+                        "height": 264,
+                        "content": "Montreal, QC  H3A 1L4",
+                        "fontFamily": "Aspekta, sans-serif",
+                        "fontSize": 25,
+                        "fontWeight": 300,
+                        "lineHeight": 1.1,
+                        "textAlign": "left",
+                        "color": "#3D9DFF",
+                        "binding": {
+                          "field": "cityLine",
+                          "type": "text"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": "flex-15",
+                "type": "flex",
+                "width": 306.66,
+                "height": 264,
+                "flexDirection": "row",
+                "justifyContent": "flex-end",
+                "alignItems": "center",
+                "padding": {
+                  "top": 5,
+                  "right": 10,
+                  "bottom": 5,
+                  "left": 0
+                },
+                "backgroundColor": "#F4F4F4",
+                "boxSizing": "border-box",
+                "children": [
+                  {
+                    "id": "image-14",
+                    "type": "image",
+                    "width": 920,
+                    "height": null,
+                    "src": "assets/decoration.svg",
+                    "fit": "contain",
+                    "display": "block"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "flex-25",
+            "type": "flex",
+            "width": 920,
+            "height": 529,
+            "flexDirection": "row",
+            "justifyContent": "flex-start",
+            "alignItems": "stretch",
+            "padding": 10,
+            "backgroundColor": "#B5DAFF",
+            "boxSizing": "border-box",
+            "children": [
+              {
+                "id": "flex-22",
+                "type": "flex",
+                "width": 306.67,
+                "height": 509,
+                "flexDirection": "column",
+                "justifyContent": "flex-start",
+                "alignItems": "flex-start",
+                "padding": 40,
+                "boxSizing": "border-box",
+                "children": [
+                  {
+                    "id": "flex-19",
+                    "type": "flex",
+                    "width": 306.67,
+                    "height": 509,
+                    "flexDirection": "column",
+                    "justifyContent": "flex-start",
+                    "alignItems": "flex-start",
+                    "boxSizing": "border-box",
+                    "children": [
+                      {
+                        "id": "text-17",
+                        "type": "text",
+                        "width": 306.67,
+                        "height": 509,
+                        "content": "Michael Masson",
+                        "fontFamily": "Aspekta, sans-serif",
+                        "fontSize": 34,
+                        "fontWeight": 500,
+                        "lineHeight": 1.1,
+                        "textAlign": "left",
+                        "color": "#000000",
+                        "marginBottom": 10,
+                        "binding": {
+                          "field": "people[0].name",
+                          "type": "text"
+                        }
+                      },
+                      {
+                        "id": "text-18",
+                        "type": "text",
+                        "width": 306.67,
+                        "height": 509,
+                        "content": "CTO @ Botpress",
+                        "fontFamily": "Aspekta, sans-serif",
+                        "fontSize": 34,
+                        "fontWeight": 300,
+                        "lineHeight": 1.1,
+                        "textAlign": "left",
+                        "color": "#000000",
+                        "marginBottom": 10,
+                        "binding": {
+                          "field": "people[0].role",
+                          "type": "text"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "id": "flex-21",
+                    "type": "flex",
+                    "width": 306.67,
+                    "height": 509,
+                    "flexDirection": "column",
+                    "justifyContent": "flex-start",
+                    "alignItems": "flex-start",
+                    "boxSizing": "border-box",
+                    "children": [
+                      {
+                        "id": "text-20",
+                        "type": "text",
+                        "width": 306.67,
+                        "height": 509,
+                        "content": "Kubernetes the right way: A platform engineering approach to K8s",
+                        "fontFamily": "Aspekta, sans-serif",
+                        "fontSize": 34,
+                        "fontWeight": 500,
+                        "lineHeight": 1.1,
+                        "textAlign": "left",
+                        "color": "#000000",
+                        "marginTop": 35,
+                        "binding": {
+                          "field": "people[0].talkTitle",
+                          "type": "text"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": "flex-24",
+                "type": "flex",
+                "width": 613.33,
+                "height": 509,
+                "flexDirection": "row",
+                "justifyContent": "flex-end",
+                "alignItems": "center",
+                "boxSizing": "border-box",
+                "children": [
+                  {
+                    "id": "svg-23",
+                    "type": "svg",
+                    "width": null,
+                    "height": 489,
+                    "viewBox": "0 0 493 476",
+                    "preserveAspectRatio": "xMidYMid meet",
+                    "imageHref": "assets/speaker-photo.png",
+                    "imagePreserveAspectRatio": "xMidYMid slice",
+                    "mask": {
+                      "id": "speakerMask",
+                      "path": "M422.085 475.135V407.263H492.43V475.135H422.085ZM422.085 67.872V0H492.43V67.872H422.085ZM0 475.135V407.263H70.3448V475.135H0ZM140.69 407.248H70.3448V339.376H0V135.744H70.3448V67.872H140.69V0H351.74V67.872H422.085V135.744H492.43V339.376H422.085V407.248H351.74V475.12H140.69V407.248ZM0 67.872V0H70.3448V67.872H0Z"
+                    },
+                    "binding": {
+                      "field": "people[0].headshot",
+                      "type": "image"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "tokens": {
+    "primary": {
+      "name": "primary",
+      "default": "#3D9DFF",
+      "editable": true
+    },
+    "secondary": {
+      "name": "secondary",
+      "default": "#B5DAFF",
+      "editable": true
+    }
+  },
+  "variants": [],
+  "bindings": [
+    {
+      "nodeId": "image-0",
+      "field": "logo",
+      "type": "image"
+    },
+    {
+      "nodeId": "text-1",
+      "field": "eventTitle",
+      "type": "text"
+    },
+    {
+      "nodeId": "text-4",
+      "field": "eventDate",
+      "type": "text"
+    },
+    {
+      "nodeId": "text-6",
+      "field": "doorTime",
+      "type": "text"
+    },
+    {
+      "nodeId": "text-9",
+      "field": "addressLine",
+      "type": "text"
+    },
+    {
+      "nodeId": "text-11",
+      "field": "cityLine",
+      "type": "text"
+    },
+    {
+      "nodeId": "text-17",
+      "field": "people[0].name",
+      "type": "text"
+    },
+    {
+      "nodeId": "text-18",
+      "field": "people[0].role",
+      "type": "text"
+    },
+    {
+      "nodeId": "text-20",
+      "field": "people[0].talkTitle",
+      "type": "text"
+    },
+    {
+      "nodeId": "svg-23",
+      "field": "people[0].headshot",
+      "type": "image"
+    }
+  ]
+}
