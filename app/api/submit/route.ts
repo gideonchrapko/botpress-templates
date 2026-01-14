@@ -82,7 +82,11 @@ export async function POST(req: NextRequest) {
     }
 
     const secondaryColor = lightenColor(primaryColor, 15);
-    const templateVariant = `${templateFamily}-${peopleCount}`;
+    // For templates without people, use variant "1" (default)
+    // For templates with people, use the people count as variant
+    const templateVariant = peopleCountNum > 0 
+      ? `${templateFamily}-${peopleCount}` 
+      : `${templateFamily}-1`;
 
     // Create submission record
     const submission = await prisma.submission.create({
