@@ -125,7 +125,7 @@ export function prepareBindingData(
   // Safely parse people, defaulting to empty array
   let people: any[] = [];
   try {
-    if (submission.people && submission.people.trim() !== "") {
+    if (submission.people && typeof submission.people === "string" && submission.people.trim() !== "") {
       people = JSON.parse(submission.people);
       if (!Array.isArray(people)) people = [];
     }

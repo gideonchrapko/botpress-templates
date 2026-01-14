@@ -301,7 +301,7 @@ export async function renderTemplateWithConfig(submission: Submission): Promise<
   let people: any[] = [];
   let uploadUrls: string[] = [];
   try {
-    if (submission.people && submission.people.trim() !== "") {
+    if (submission.people && typeof submission.people === "string" && submission.people.trim() !== "") {
       people = JSON.parse(submission.people);
       if (!Array.isArray(people)) people = [];
     }
@@ -309,7 +309,7 @@ export async function renderTemplateWithConfig(submission: Submission): Promise<
     people = [];
   }
   try {
-    if (submission.uploadUrls && submission.uploadUrls.trim() !== "") {
+    if (submission.uploadUrls && typeof submission.uploadUrls === "string" && submission.uploadUrls.trim() !== "") {
       uploadUrls = JSON.parse(submission.uploadUrls);
       if (!Array.isArray(uploadUrls)) uploadUrls = [];
     }
