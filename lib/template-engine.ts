@@ -34,8 +34,18 @@ async function processAssets(
   submission: Submission,
   assetsDir: string
 ): Promise<string> {
+  // Safety checks
+  if (!config.assets || !config.assets.logo) {
+    throw new Error("Config assets.logo is missing");
+  }
+  if (!config.assets.logo.default) {
+    throw new Error("Config assets.logo.default is missing");
+  }
+  
   // Get logo file name (with swap logic)
-  const logoFile = config.assets.logo.swap[submission.templateFamily] || config.assets.logo.default;
+  const logoFile = (config.assets.logo.swap && config.assets.logo.swap[submission.templateFamily]) 
+    ? config.assets.logo.swap[submission.templateFamily] 
+    : config.assets.logo.default;
 
   // Process src="assets/..." patterns
   const assetSrcRegex = /src="assets\/([^"]+)"/g;
@@ -272,14 +282,15 @@ function processPeople(
 
 // Main render function using config
 export async function renderTemplateWithConfig(submission: Submission): Promise<string> {
-  const templateFamily = submission.templateFamily;
-  const templateVariant = submission.templateVariant;
-  
-  // Load config
-  const config = await getTemplateConfig(templateFamily);
-  if (!config) {
-    throw new Error(`Template config not found for family: ${templateFamily}`);
-  }
+  try {
+    const templateFamily = submission.templateFamily;
+    const templateVariant = submission.templateVariant;
+    
+    // Load config
+    const config = await getTemplateConfig(templateFamily);
+    if (!config) {
+      throw new Error(`Template config not found for family: ${templateFamily}`);
+    }
 
   // Extract variant number
   const variantNumber = templateVariant.split("-").pop() || "1";
@@ -317,39 +328,73 @@ export async function renderTemplateWithConfig(submission: Submission): Promise<
     uploadUrls = [];
   }
 
-  // Process assets
-  const assetsDir = join(process.cwd(), "public", "assets");
-  html = await processAssets(html, config, submission, assetsDir);
-
-  // Process fonts
-  html = await processFonts(html);
-
-  // Process color replacements
-  const lighterPrimaryColor = lightenColor(submission.primaryColor, 25);
-  html = html.replace(/#3D9DFF/g, submission.primaryColor);
-  if (config.colorReplacements) {
-    for (const [color, fieldName] of Object.entries(config.colorReplacements)) {
-      if (fieldName === "secondaryColor") {
-        html = html.replace(new RegExp(color, "g"), lighterPrimaryColor);
-      }
+    // Process assets
+    try {
+      const assetsDir = join(process.cwd(), "public", "assets");
+      html = await processAssets(html, config, submission, assetsDir);
+    } catch (error) {
+      console.error("Error processing assets:", error);
+      throw new Error(`Failed to process assets: ${error instanceof Error ? error.message : String(error)}`);
     }
-  }
 
-  // Process all fields
-  if (config.fields && Array.isArray(config.fields)) {
-    for (const field of config.fields) {
-      if (field.type === "people") {
-        html = processPeople(html, field, people, uploadUrls);
-      } else {
-        // Get value from submission
-        const value = (submission as any)[field.name];
-        if (value !== undefined && value !== null) {
-          html = replaceField(html, field, value, submission);
+    // Process fonts
+    try {
+      html = await processFonts(html);
+    } catch (error) {
+      console.error("Error processing fonts:", error);
+      throw new Error(`Failed to process fonts: ${error instanceof Error ? error.message : String(error)}`);
+    }
+
+    // Process color replacements
+    try {
+      if (!submission.primaryColor) {
+        throw new Error("primaryColor is missing from submission");
+      }
+      const lighterPrimaryColor = lightenColor(submission.primaryColor, 25);
+      html = html.replace(/#3D9DFF/g, submission.primaryColor);
+      if (config.colorReplacements) {
+        for (const [color, fieldName] of Object.entries(config.colorReplacements)) {
+          if (fieldName === "secondaryColor") {
+            html = html.replace(new RegExp(color, "g"), lighterPrimaryColor);
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error processing color replacements:", error);
+      throw new Error(`Failed to process color replacements: ${error instanceof Error ? error.message : String(error)}`);
+    }
+
+    // Process all fields
+    if (config.fields && Array.isArray(config.fields)) {
+      for (const field of config.fields) {
+        try {
+          if (field.type === "people") {
+            html = processPeople(html, field, people, uploadUrls);
+          } else {
+            // Get value from submission
+            const value = (submission as any)[field.name];
+            if (value !== undefined && value !== null) {
+              html = replaceField(html, field, value, submission);
+            }
+          }
+        } catch (error) {
+          console.error(`Error processing field ${field.name}:`, error);
+          throw new Error(`Failed to process field "${field.name}": ${error instanceof Error ? error.message : String(error)}`);
         }
       }
     }
-  }
 
-  return html;
+    return html;
+  } catch (error) {
+    console.error("Error in renderTemplateWithConfig:", error);
+    console.error("Submission data:", {
+      id: submission.id,
+      templateFamily: submission.templateFamily,
+      templateVariant: submission.templateVariant,
+      people: submission.people?.substring(0, 50),
+      uploadUrls: submission.uploadUrls?.substring(0, 50),
+    });
+    throw new Error(`Template rendering failed: ${error instanceof Error ? error.message : String(error)}`);
+  }
 }
 

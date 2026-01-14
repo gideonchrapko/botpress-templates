@@ -41,10 +41,34 @@ export async function POST(req: NextRequest) {
     }
 
     // Parse formats from JSON
-    const formats = JSON.parse(submission.formats) as string[];
+    let formats: string[] = [];
+    try {
+      formats = JSON.parse(submission.formats) as string[];
+      if (!Array.isArray(formats)) {
+        formats = ["png"]; // Default fallback
+      }
+    } catch (error) {
+      console.error("Error parsing formats, using default:", error);
+      formats = ["png"]; // Default fallback
+    }
     
     // Render HTML template
-    const html = await renderTemplate(submission);
+    let html: string;
+    try {
+      html = await renderTemplate(submission);
+    } catch (error) {
+      console.error("Error rendering template:", error);
+      console.error("Submission ID:", submissionId);
+      console.error("Template Family:", submission.templateFamily);
+      console.error("Template Variant:", submission.templateVariant);
+      return NextResponse.json(
+        { 
+          error: "Failed to render template", 
+          details: error instanceof Error ? error.message : String(error) 
+        },
+        { status: 500 }
+      );
+    }
     const dimensions = getPosterDimensions(submission.scale);
 
     // Launch Puppeteer with Chromium
