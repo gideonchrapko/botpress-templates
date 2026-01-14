@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/Providers";
 import Navbar from "@/components/Navbar";
 
-const inter = Inter({ subsets: ["latin"] });
+// Fonts are loaded via CSS (public/fonts/font-face.css) to avoid network timeout issues
+// with next/font/google. The Aspekta font family is already defined in globals.css
 
 export const metadata: Metadata = {
   title: "Botpress Poster Generator",
@@ -18,7 +18,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body>
         <Providers>
           <Navbar />
           {children}
