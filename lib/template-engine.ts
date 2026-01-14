@@ -187,13 +187,20 @@ function replaceField(
 
   // Format value based on field type
   if (field.type === "date") {
+    if (!value) {
+      // If date is missing, return empty string or placeholder
+      return html; // Don't replace if value is missing
+    }
     replacementValue = formatDate(field, new Date(value));
   } else if (field.type === "time") {
+    if (!value) {
+      return html; // Don't replace if value is missing
+    }
     replacementValue = formatTime(field, value);
   } else if (field.type === "color") {
-    replacementValue = value;
+    replacementValue = value || "#3D9DFF"; // Default color if missing
   } else {
-    replacementValue = value;
+    replacementValue = value || ""; // Default to empty string for text fields
   }
 
   // Apply all replacements for this field
@@ -373,12 +380,14 @@ export async function renderTemplateWithConfig(submission: Submission): Promise<
           } else {
             // Get value from submission
             const value = (submission as any)[field.name];
-            if (value !== undefined && value !== null) {
-              html = replaceField(html, field, value, submission);
-            }
+            // Process field even if value is undefined/null (for optional fields)
+            // replaceField will handle missing values gracefully
+            html = replaceField(html, field, value, submission);
           }
         } catch (error) {
           console.error(`Error processing field ${field.name}:`, error);
+          console.error(`Field config:`, JSON.stringify(field, null, 2));
+          console.error(`Field value:`, (submission as any)[field.name]);
           throw new Error(`Failed to process field "${field.name}": ${error instanceof Error ? error.message : String(error)}`);
         }
       }
