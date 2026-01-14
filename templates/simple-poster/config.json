@@ -1,0 +1,58 @@
+{
+  "id": "simple-poster",
+  "name": "Simple Monthly Poster",
+  "format": "html",
+  "width": 1080,
+  "height": 1080,
+  "variants": ["1"],
+  "fields": [
+    {
+      "type": "text",
+      "name": "eventTitle",
+      "label": "Event Title",
+      "placeholder": "Code @ Montreal",
+      "maxLength": 60,
+      "replacements": [
+        { "pattern": "{{eventTitle}}", "type": "text" }
+      ]
+    },
+    {
+      "type": "color",
+      "name": "primaryColor",
+      "label": "Primary Color",
+      "default": "#3D9DFF",
+      "replacements": [
+        { "pattern": "#3D9DFF", "type": "color" }
+      ]
+    },
+    {
+      "type": "date",
+      "name": "eventDate",
+      "label": "Event Date",
+      "format": "MMMM",
+      "locale": "en",
+      "replacements": [
+        { "pattern": "{{eventDate}}", "type": "date" }
+      ]
+    },
+    {
+      "type": "text",
+      "name": "talkTitle",
+      "label": "Talk Title (Optional)",
+      "placeholder": "Optional talk title",
+      "maxLength": 120,
+      "replacements": [
+        { "pattern": "{{talkTitle}}", "type": "text" }
+      ]
+    }
+  ],
+  "assets": {
+    "logo": {
+      "default": "mtl-code-wide.svg",
+      "swap": {
+        "code-a-quebec": "code-@-québec-long.svg"
+      }
+    }
+  },
+  "colorReplacements": {}
+}
