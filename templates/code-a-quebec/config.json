@@ -1,6 +1,7 @@
 {
   "id": "code-a-quebec",
   "name": "Code @ Québec Event Poster",
+  "format": "node",
   "width": 1080,
   "height": 1350,
   "variants": ["1", "2", "3"],

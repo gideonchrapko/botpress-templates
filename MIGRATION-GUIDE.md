@@ -283,10 +283,11 @@ Support multi-page documents
 - ✅ No breaking changes
 - ✅ Gradual migration (one template at a time)
 
-**After Migration**:
-- ✅ All templates will be node graphs
-- ✅ HTML files can be removed (optional)
-- ✅ System is cleaner and faster
+**After Migration** (Hybrid System):
+- ✅ Templates can be node graphs OR HTML (explicit choice per template)
+- ✅ HTML templates remain first-class citizens (not deprecated)
+- ✅ Use node graphs for simple posters, HTML for complex/long-format
+- ✅ HTML files can be kept or removed (optional, based on template needs)
 
 ### Breaking Changes
 
