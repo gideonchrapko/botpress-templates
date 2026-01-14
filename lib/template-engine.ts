@@ -212,6 +212,14 @@ function processPeople(
   if (!peopleField.fields) {
     return html;
   }
+  
+  // Safety check: ensure people and uploadUrls are arrays
+  if (!Array.isArray(people)) {
+    people = [];
+  }
+  if (!Array.isArray(uploadUrls)) {
+    uploadUrls = [];
+  }
 
   // Helper to replace first occurrence (needs to be accessible to all iterations)
   const replaceFirst = (patterns: RegExp[], replacement: string): boolean => {
@@ -287,8 +295,25 @@ export async function renderTemplateWithConfig(submission: Submission): Promise<
   }
 
   let html = await readFile(templatePath, "utf-8");
-  const people = JSON.parse(submission.people);
-  const uploadUrls = JSON.parse(submission.uploadUrls);
+  // Safely parse people and uploadUrls, defaulting to empty arrays if undefined/null/empty
+  let people: any[] = [];
+  let uploadUrls: string[] = [];
+  try {
+    if (submission.people && submission.people.trim() !== "") {
+      people = JSON.parse(submission.people);
+      if (!Array.isArray(people)) people = [];
+    }
+  } catch {
+    people = [];
+  }
+  try {
+    if (submission.uploadUrls && submission.uploadUrls.trim() !== "") {
+      uploadUrls = JSON.parse(submission.uploadUrls);
+      if (!Array.isArray(uploadUrls)) uploadUrls = [];
+    }
+  } catch {
+    uploadUrls = [];
+  }
 
   // Process assets
   const assetsDir = join(process.cwd(), "public", "assets");
