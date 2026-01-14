@@ -85,7 +85,7 @@ export async function getAllTemplateConfigs(): Promise<TemplateConfig[]> {
 
   // For now, we'll hardcode the known families
   // In the future, we could read the directory
-  const families = ["mtl-code", "code-a-quebec", "simple-poster"];
+  const families = ["mtl-code", "code-a-quebec", "code-a-quebec-thumbnail"];
   const configs: TemplateConfig[] = [];
 
   for (const family of families) {

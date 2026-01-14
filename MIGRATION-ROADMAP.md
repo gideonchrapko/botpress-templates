@@ -181,7 +181,7 @@ Phase 8: Long-Format Content [░░░░░░░░░░] Weeks 21-24
 
 **Note**: Phase 2 is now optional. Convert templates selectively when node graphs add value. HTML templates remain first-class.
 
-**Template Added**: `simple-poster` - A simple 1:1 HTML template demonstrating the hybrid system with explicit format configuration.
+**Template Added**: `code-a-quebec-thumbnail` - A simple 1:1 HTML template (Code @ Québec Event Thumbnail) demonstrating the hybrid system with explicit format configuration.
 
 ### Dependencies
 
