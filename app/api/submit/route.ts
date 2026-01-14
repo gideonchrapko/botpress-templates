@@ -32,11 +32,12 @@ export async function POST(req: NextRequest) {
     const addressLine = config?.address?.addressLine || "400 Blvd. De Maisonneuve Ouest";
     const cityLine = config?.address?.cityLine || "Montreal, QC  H3A 1L4";
 
-    const peopleCountNum = parseInt(peopleCount);
+    // Safely parse peopleCount, defaulting to 0 if missing/invalid
+    const peopleCountNum = peopleCount ? parseInt(peopleCount) || 0 : 0;
     const people = [];
     const uploadUrls = [];
 
-    // Process each person
+    // Process each person (only if peopleCount > 0)
     for (let i = 0; i < peopleCountNum; i++) {
       const headshot = formData.get(`headshot_${i}`) as File;
       const name = formData.get(`person_${i}_name`) as string;
