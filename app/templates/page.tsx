@@ -3,6 +3,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { FileText } from "lucide-react";
 import { getAllTemplateConfigs } from "@/lib/template-registry";
 
+// Force dynamic rendering to avoid database queries during build
+export const dynamic = 'force-dynamic';
+
 export default async function TemplatesPage() {
   const configs = await getAllTemplateConfigs();
 

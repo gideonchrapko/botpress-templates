@@ -10,6 +10,9 @@ import { AutoRefresh } from "@/components/AutoRefresh";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { getTemplateConfig } from "@/lib/template-registry";
 
+// Force dynamic rendering to avoid database queries during build
+export const dynamic = 'force-dynamic';
+
 export default async function ResultsPage({
   params,
 }: {

@@ -72,8 +72,13 @@ export async function getTemplateConfig(family: string): Promise<TemplateConfig 
       configCache.set(family, config);
       return config;
     }
-  } catch (error) {
-    console.warn(`Failed to load template ${family} from database:`, error);
+  } catch (error: any) {
+    // Silently fall back to filesystem if database is unavailable
+    // This is expected during build time or if DATABASE_URL isn't configured
+    if (error?.code !== 'P1001' && error?.code !== 'P1017') {
+      // Only log non-connection errors
+      console.warn(`Failed to load template ${family} from database:`, error?.message || error);
+    }
     // Fall through to filesystem
   }
 
@@ -117,8 +122,13 @@ export async function getAllTemplateConfigs(): Promise<TemplateConfig[]> {
         }
       }
     }
-  } catch (error) {
-    console.warn("Failed to load templates from database:", error);
+  } catch (error: any) {
+    // Silently fall back to filesystem if database is unavailable
+    // This is expected during build time or if DATABASE_URL isn't configured
+    if (error?.code !== 'P1001' && error?.code !== 'P1017') {
+      // Only log non-connection errors
+      console.warn("Failed to load templates from database:", error?.message || error);
+    }
   }
 
   // Priority 2: Load from filesystem (existing templates and development)

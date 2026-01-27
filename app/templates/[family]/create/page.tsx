@@ -3,6 +3,9 @@ import { getTemplateConfig } from "@/lib/template-registry";
 import DynamicForm from "@/components/forms/DynamicForm";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 
+// Force dynamic rendering to avoid database queries during build
+export const dynamic = 'force-dynamic';
+
 export default async function CreateTemplatePage({
   params,
 }: {
