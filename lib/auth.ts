@@ -3,15 +3,34 @@ import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import { prisma } from "@/lib/prisma";
 
+// Validate required environment variables
+const requiredEnvVars = {
+  NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET,
+  NEXTAUTH_URL: process.env.NEXTAUTH_URL || process.env.AUTH_URL,
+  GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
+  GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
+};
+
+// Check for missing variables (only in production to avoid breaking dev)
+if (process.env.NODE_ENV === "production") {
+  const missing = Object.entries(requiredEnvVars)
+    .filter(([key, value]) => !value)
+    .map(([key]) => key);
+  
+  if (missing.length > 0) {
+    console.error("Missing required NextAuth environment variables:", missing);
+  }
+}
+
 export const authOptions = {
   adapter: PrismaAdapter(prisma) as any,
-  secret: process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET,
+  secret: requiredEnvVars.NEXTAUTH_SECRET,
   trustHost: true,
   debug: process.env.NODE_ENV === "development",
   providers: [
     GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID || "",
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+      clientId: requiredEnvVars.GOOGLE_CLIENT_ID || "",
+      clientSecret: requiredEnvVars.GOOGLE_CLIENT_SECRET || "",
     }),
   ],
   callbacks: {
@@ -33,23 +52,31 @@ export const authOptions = {
       return session;
     },
   },
+  events: {
+    async signIn() {
+      // Ensure database connection is active before sign in
+      try {
+        // Test connection with a simple query
+        await prisma.$queryRaw`SELECT 1`;
+      } catch (error: any) {
+        console.error("Database connection failed during sign in:", error.message);
+        // Try to reconnect
+        try {
+          await prisma.$connect();
+        } catch (reconnectError: any) {
+          console.error("Failed to reconnect to database:", reconnectError.message);
+        }
+      }
+    },
+  },
   pages: {
     signIn: "/",
   },
   session: {
     strategy: "database" as const,
   },
-  cookies: {
-    pkceCodeVerifier: {
-      name: `${process.env.NODE_ENV === "production" ? "__Secure-" : ""}authjs.pkce.code_verifier`,
-      options: {
-        httpOnly: true,
-        sameSite: "lax" as const,
-        path: "/",
-        secure: process.env.NODE_ENV === "production",
-      },
-    },
-  },
+  // Remove custom cookie config - let NextAuth handle it with defaults
+  // Custom cookie config was causing parsing errors in production
 };
 
 // Create and export the auth instance for use in middleware and server components
