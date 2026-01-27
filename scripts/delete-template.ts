@@ -73,7 +73,7 @@ async function listAllTemplates() {
     
     console.log("\n📋 Templates in database:");
     console.log("─".repeat(60));
-    templates.forEach((t) => {
+    templates.forEach((t: { family: string; name: string; format: string }) => {
       console.log(`  ${t.family.padEnd(30)} | ${t.name.padEnd(20)} | ${t.format}`);
     });
     console.log("─".repeat(60));
