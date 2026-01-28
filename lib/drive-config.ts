@@ -11,13 +11,12 @@
  */
 
 export const GOOGLE_DRIVE_FOLDER_IDS = [
-  "102ZmXZzVKmIoIW5xOG11FMb2Gx7n1X_E",
-  "1hlT6-h9gXakhoezGQc06hJ2dGu0PT116",
-  "1nBccd9qkGiTeEaRwumyPd-UcJ95fpoZn",
-  "18LCFQYlFtQYZJn5TYTKkKyX38iQ7PzPG",
-  "1rYzS8P8HAFNAlqcjRQnIrc3dIWEy3WBK",
-  "1r6rXvfDySx5tKg-ubOOlZVSeYEMH9PhQ",
-  "1U9vge9FKLWBDO06eErie5XAzhttTy0Jd",
+  "102ZmXZzVKmIoIW5xOG11FMb2Gx7n1X_E",  // fonts
+  "1nBccd9qkGiTeEaRwumyPd-UcJ95fpoZn",  // backgrounds
+  "18LCFQYlFtQYZJn5TYTKkKyX38iQ7PzPG",  // graphics
+  "1rYzS8P8HAFNAlqcjRQnIrc3dIWEy3WBK",  // illustrations
+  "1r6rXvfDySx5tKg-ubOOlZVSeYEMH9PhQ",  // images
+  "1U9vge9FKLWBDO06eErie5XAzhttTy0Jd",  // logos
   // Add more folder IDs here:
   // "new_folder_id_here",
 ];

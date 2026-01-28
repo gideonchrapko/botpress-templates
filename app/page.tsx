@@ -1,9 +1,13 @@
 import { auth } from "@/lib/auth";
 import SignInButton from "@/components/SignInButton";
 import DriveGallery from "@/components/DriveGallery";
-import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { FileText } from "lucide-react";
+import { getAllTemplateConfigs } from "@/lib/template-registry";
+
+// Force dynamic rendering to avoid database queries during build
+export const dynamic = 'force-dynamic';
 
 export default async function Home({
   searchParams,
@@ -16,6 +20,8 @@ export default async function Home({
 
   // If authenticated, show the full page with templates and drive resources
   if (session) {
+    const configs = await getAllTemplateConfigs();
+
     return (
       <div className="container mx-auto py-8">
         <div className="mb-8">
@@ -27,25 +33,44 @@ export default async function Home({
 
         {/* Templates Section */}
         <section className="mb-12">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-2xl font-bold">Templates</h2>
-              <p className="text-muted-foreground mt-1">
-                Generate posters and graphics from templates
-              </p>
-            </div>
-            <Link href="/templates">
-              <Button variant="outline">View All Templates</Button>
-            </Link>
-          </div>
-          <div className="text-center py-8 border rounded-lg">
-            <p className="text-muted-foreground mb-4">
-              Browse and create templates
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold">Templates</h2>
+            <p className="text-muted-foreground mt-1">
+              Generate posters and graphics from templates
             </p>
-            <Link href="/templates">
-              <Button>Go to Templates</Button>
-            </Link>
           </div>
+          
+          {configs.length === 0 ? (
+            <div className="text-center py-8 border rounded-lg">
+              <p className="text-muted-foreground">No templates available</p>
+            </div>
+          ) : (
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {configs.map((config) => {
+                const peopleField = config.fields.find((f) => f.type === "people");
+                const maxPeople = peopleField?.maxCount || 3;
+                
+                return (
+                  <Link key={config.id} href={`/templates/${config.id}/create`}>
+                    <Card className="cursor-pointer hover:shadow-lg transition-shadow">
+                      <CardHeader>
+                        <FileText className="h-8 w-8 mb-2" />
+                        <CardTitle>{config.name}</CardTitle>
+                        <CardDescription>
+                          Generate a poster for {config.name} {config.height}x{config.width}
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-sm text-muted-foreground">
+                          Supports 1-{maxPeople} speakers with customizable colors and formats
+                        </p>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
         </section>
 
         {/* Google Drive Resources Section */}
@@ -53,7 +78,7 @@ export default async function Home({
           <div className="mb-6">
             <h2 className="text-2xl font-bold">Design Resources</h2>
             <p className="text-muted-foreground mt-1">
-              Access images, folders, and documents from Google Drive
+              Access folders from Google Drive
             </p>
           </div>
           <DriveGallery />

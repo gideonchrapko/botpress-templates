@@ -22,7 +22,7 @@ export default async function CreateTemplatePage({
     <div className="container mx-auto py-8 max-w-4xl">
       <Breadcrumbs
         items={[
-          { label: "Templates", href: "/templates" },
+          { label: "Home", href: "/" },
           { label: config.name },
         ]}
       />

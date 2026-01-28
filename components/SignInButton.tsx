@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 export default function SignInButton() {
   return (
     <Button
-      onClick={() => signIn("google", { callbackUrl: "/templates" })}
+      onClick={() => signIn("google", { callbackUrl: "/" })}
       className="w-full"
       size="lg"
     >

@@ -34,9 +34,9 @@ export default async function ResultsPage({
         <Card>
           <CardContent className="pt-6">
             <p>Submission not found or access denied.</p>
-            <Link href="/templates">
+            <Link href="/">
               <Button variant="outline" className="mt-4">
-                Back to Templates
+                Back to Home
               </Button>
             </Link>
           </CardContent>
@@ -66,7 +66,7 @@ export default async function ResultsPage({
 
   // Load template config to get name (safely)
   let templateName = "Template";
-  let templateHref = "/templates";
+  let templateHref = "/";
   try {
     const templateConfig = await getTemplateConfig(submission.templateFamily);
     templateName = templateConfig?.name || "Template";
@@ -81,7 +81,7 @@ export default async function ResultsPage({
       <AutoRefresh hasOutputs={!!outputs && outputs.length > 0} submissionId={id} />
       <Breadcrumbs
         items={[
-          { label: "Templates", href: "/templates" },
+          { label: "Home", href: "/" },
           { label: templateName, href: templateHref },
           { label: "Results" },
         ]}
@@ -138,8 +138,8 @@ export default async function ResultsPage({
               </div>
 
               <div className="flex gap-4 pt-4">
-                <Link href="/templates">
-                  <Button variant="outline">Back to Templates</Button>
+                <Link href="/">
+                  <Button variant="outline">Back to Home</Button>
                 </Link>
               </div>
             </div>
@@ -150,8 +150,8 @@ export default async function ResultsPage({
               </p>
               <div className="flex gap-4 justify-center">
                 <RetryRenderButton submissionId={id} />
-                <Link href="/templates">
-                  <Button variant="outline">Back to Templates</Button>
+                <Link href="/">
+                  <Button variant="outline">Back to Home</Button>
                 </Link>
               </div>
             </div>

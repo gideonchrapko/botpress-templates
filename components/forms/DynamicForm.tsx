@@ -577,7 +577,7 @@ export default function DynamicForm({ templateFamily, config }: DynamicFormProps
         <Button
           type="button"
           variant="outline"
-          onClick={() => router.push("/templates")}
+          onClick={() => router.push("/")}
         >
           Cancel
         </Button>

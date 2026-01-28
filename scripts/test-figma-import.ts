@@ -63,7 +63,7 @@ async function testImport() {
     console.log(`        -H "Content-Type: application/json" \\`);
     console.log(`        -H "Cookie: next-auth.session-token=YOUR_TOKEN" \\`);
     console.log(`        -d @${exportPath}\n`);
-    console.log("   4. Check templates: http://localhost:3000/templates");
+    console.log("   4. Check templates: http://localhost:3000/");
     console.log("   5. Test template: http://localhost:3000/templates/{template-id}/create\n");
   } else {
     console.error("❌ Export structure is invalid. Please fix the issues above.\n");

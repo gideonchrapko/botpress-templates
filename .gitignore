@@ -65,5 +65,10 @@ prisma/migrations/dev.db-journal
 Thumbs.db
 
 # Icon files (macOS placeholder files that cause Git corruption)
+# These MUST be ignored to prevent Git ref corruption
 Icon
 **/Icon
+Icon?
+**/Icon?
+*.Icon
+**/*.Icon
