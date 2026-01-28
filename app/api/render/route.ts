@@ -62,8 +62,8 @@ export async function POST(req: NextRequest) {
       const errorStack = error instanceof Error ? error.stack : undefined;
       
       console.error("=== TEMPLATE RENDERING ERROR ===");
-      console.error("Error:", errorMessage);
-      console.error("Stack:", errorStack);
+      console.error("Error Message:", errorMessage);
+      console.error("Error Stack:", errorStack);
       console.error("Submission ID:", submissionId);
       console.error("Template Family:", submission.templateFamily);
       console.error("Template Variant:", submission.templateVariant);
@@ -72,8 +72,29 @@ export async function POST(req: NextRequest) {
         eventDate: submission.eventDate,
         primaryColor: submission.primaryColor,
         people: submission.people?.substring(0, 100),
-        uploadUrls: submission.uploadUrls?.substring(0, 100),
+        uploadUrlsLength: submission.uploadUrls?.length || 0,
+        uploadUrlsPreview: submission.uploadUrls?.substring(0, 500),
       });
+      
+      // For blog-image-generator, try to parse and show the structure
+      if (submission.templateFamily === 'blog-image-generator') {
+        try {
+          const uploadUrls = JSON.parse(submission.uploadUrls || '{}');
+          console.error("Parsed uploadUrls structure:", {
+            hasSelection: !!uploadUrls.selection,
+            selectionKeys: uploadUrls.selection ? Object.keys(uploadUrls.selection) : [],
+            componentsCount: uploadUrls.components?.length || 0,
+            componentsPreview: uploadUrls.components?.slice(0, 3).map((c: any) => ({
+              name: c.name,
+              type: c.type,
+              hasImageUrl: !!c.imageUrl
+            }))
+          });
+        } catch (parseError) {
+          console.error("Failed to parse uploadUrls JSON:", parseError);
+        }
+      }
+      
       console.error("=================================");
       
       return NextResponse.json(

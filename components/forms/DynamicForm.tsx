@@ -92,8 +92,13 @@ function buildSchema(config: TemplateConfig) {
   // Add ALL dynamic fields from config FIRST
   config.fields.forEach((field) => {
     if (field.type === "text") {
-      // Text fields are required (user must fill them in)
-      schema[field.name] = z.string().min(1, `${field.label} is required`).max(field.maxLength || 100);
+      // Text fields are required unless marked as optional
+      if (field.optional) {
+        // Optional fields can be empty strings (no min length requirement)
+        schema[field.name] = z.string().max(field.maxLength || 100);
+      } else {
+        schema[field.name] = z.string().min(1, `${field.label} is required`).max(field.maxLength || 100);
+      }
     } else if (field.type === "color") {
       schema[field.name] = z.string().min(1);
     } else if (field.type === "date") {
@@ -192,8 +197,12 @@ export default function DynamicForm({ templateFamily, config }: DynamicFormProps
       
       // Append all dynamic text/date/time fields from config
       config.fields.forEach((field) => {
-        if (field.type === "text" && data[field.name as keyof FormData]) {
-          formData.append(field.name, data[field.name as keyof FormData] as string);
+        if (field.type === "text") {
+          const value = data[field.name as keyof FormData];
+          // For optional fields, append even if empty. For required fields, value should exist.
+          if (field.optional || value) {
+            formData.append(field.name, (value as string) || "");
+          }
         } else if (field.type === "date" && data[field.name as keyof FormData]) {
           const dateValue = data[field.name as keyof FormData] as Date;
           formData.append(field.name, dateValue.toISOString());

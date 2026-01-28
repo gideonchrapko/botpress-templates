@@ -10,9 +10,6 @@ import { AutoRefresh } from "@/components/AutoRefresh";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { getTemplateConfig } from "@/lib/template-registry";
 
-// Force dynamic rendering to avoid database queries during build
-export const dynamic = 'force-dynamic';
-
 export default async function ResultsPage({
   params,
 }: {
@@ -70,7 +67,7 @@ export default async function ResultsPage({
   try {
     const templateConfig = await getTemplateConfig(submission.templateFamily);
     templateName = templateConfig?.name || "Template";
-    templateHref = `/templates/${submission.templateFamily}/create`;
+    templateHref = `/${submission.templateFamily}/create`;
   } catch (error) {
     console.error("Error loading template config:", error);
     // Use defaults already set above

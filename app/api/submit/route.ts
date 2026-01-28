@@ -4,6 +4,9 @@ import { prisma } from "@/lib/prisma";
 import { lightenColor } from "@/lib/utils";
 import { getTemplateConfig } from "@/lib/template-registry";
 import sharp from "sharp";
+import { selectComponentsWithWordMatch } from "@/lib/blog-image-generator";
+import { loadComponentsFromFigma, getComponentImageUrl } from "@/lib/component-registry";
+import { ComponentInfo } from "@/lib/blog-image-rules";
 
 export async function POST(req: NextRequest) {
   try {
@@ -13,6 +16,130 @@ export async function POST(req: NextRequest) {
     }
 
     const formData = await req.formData();
+    const templateFamily = (formData.get("templateFamily") as string) || "mtl-code";
+    
+    // Handle blog-image-generator specially
+    if (templateFamily === "blog-image-generator") {
+      const blogTitle = formData.get("blogTitle") as string;
+      const keywords = formData.get("keywords") as string || blogTitle;
+      
+      if (!blogTitle) {
+        return NextResponse.json({ error: "Blog title is required" }, { status: 400 });
+      }
+
+      // Load Figma components
+      const figmaFileId = process.env.FIGMA_FILE_ID;
+      if (!figmaFileId) {
+        return NextResponse.json({ error: "FIGMA_FILE_ID not configured" }, { status: 500 });
+      }
+
+      let components: ComponentInfo[];
+      try {
+        components = await loadComponentsFromFigma(figmaFileId);
+      } catch (error) {
+        console.error("Error loading components from Figma:", error);
+        return NextResponse.json({ 
+          error: "Failed to load components from Figma",
+          details: error instanceof Error ? error.message : String(error)
+        }, { status: 500 });
+      }
+
+      if (components.length === 0) {
+        return NextResponse.json({ error: "No components found in Figma file" }, { status: 400 });
+      }
+      
+      // Select components using word matching (without image URLs first to avoid rate limits)
+      let selection;
+      try {
+        selection = selectComponentsWithWordMatch(blogTitle, keywords, components);
+      } catch (error) {
+        console.error("Error selecting components:", error);
+        return NextResponse.json({ 
+          error: "Failed to select components",
+          details: error instanceof Error ? error.message : String(error)
+        }, { status: 500 });
+      }
+
+      // Now fetch image URLs only for selected components (much fewer API calls)
+      const selectedComponentNames = [
+        selection.background,
+        selection.mainImage,
+        ...selection.supportingImages
+      ];
+      
+      const selectedComponents = components.filter(c => 
+        selectedComponentNames.includes(c.name)
+      );
+
+      let componentsWithImages: ComponentInfo[];
+      try {
+        // Add a small delay between requests to avoid rate limiting
+        componentsWithImages = [];
+        for (const comp of selectedComponents) {
+          const nodeId = comp.figmaNodeId || comp.id;
+          const imageUrl = await getComponentImageUrl(figmaFileId, nodeId, "png");
+          componentsWithImages.push({
+            ...comp,
+            imageUrl,
+          });
+          // Small delay to avoid rate limiting (50ms between requests)
+          await new Promise(resolve => setTimeout(resolve, 50));
+        }
+        
+        // Also include all components (without images) for reference
+        const allComponentsWithSelectedImages = components.map(comp => {
+          const selected = componentsWithImages.find(c => c.id === comp.id);
+          return selected || comp;
+        });
+        
+        componentsWithImages = allComponentsWithSelectedImages;
+      } catch (error) {
+        console.error("Error fetching component image URLs:", error);
+        return NextResponse.json({ 
+          error: "Failed to fetch component images",
+          details: error instanceof Error ? error.message : String(error)
+        }, { status: 500 });
+      }
+
+      // Create submission with selected component data
+      const submission = await prisma.submission.create({
+        data: {
+          ownerEmail: session.user.email,
+          templateFamily: "blog-image-generator",
+          templateVariant: "blog-image-generator-1",
+          primaryColor: "#000000",
+          secondaryColor: "#000000",
+          scale: 1,
+          formats: JSON.stringify(["png"]),
+          eventTitle: blogTitle,
+          venueName: "",
+          addressLine: "",
+          cityLine: "",
+          eventDate: new Date(),
+          doorTime: "",
+          people: JSON.stringify([]),
+          uploadUrls: JSON.stringify({
+            selection: selection,
+            components: componentsWithImages,
+          }),
+        },
+      });
+
+      // Trigger rendering (async)
+      const cookies = req.headers.get("cookie") || "";
+      fetch(`${process.env.NEXTAUTH_URL || "http://localhost:3000"}/api/render`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Cookie: cookies,
+        },
+        body: JSON.stringify({ submissionId: submission.id }),
+      });
+
+      return NextResponse.json({ submissionId: submission.id });
+    }
+
+    // Regular template handling
     const primaryColor = formData.get("primaryColor") as string;
     const peopleCount = formData.get("peopleCount") as string;
     const scale = parseInt(formData.get("scale") as string);
@@ -21,7 +148,6 @@ export async function POST(req: NextRequest) {
     if (!formats || formats.length === 0) {
       return NextResponse.json({ error: "At least one format must be selected" }, { status: 400 });
     }
-    const templateFamily = (formData.get("templateFamily") as string) || "mtl-code";
     
     // Get config to determine which fields are available
     const config = await getTemplateConfig(templateFamily);

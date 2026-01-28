@@ -95,6 +95,12 @@ function applyVariantOverridesToNode(
   node: TemplateNode,
   variant: { overrides: Array<{ nodeId: string; operation: "hide" | "show" }> }
 ): TemplateNode {
+  // Ensure overrides is an array
+  if (!Array.isArray(variant.overrides)) {
+    console.warn(`Variant overrides is not an array, defaulting to empty array. Got:`, typeof variant.overrides, variant.overrides);
+    variant.overrides = [];
+  }
+  
   const override = variant.overrides.find(o => o.nodeId === node.id);
   if (override) {
     if (override.operation === "hide") {
@@ -298,6 +304,16 @@ function generateFrameHTML(node: FrameNode): string {
     `box-sizing: ${node.boxSizing || "border-box"}`,
     `overflow: ${node.overflow || "hidden"}`,
   ];
+
+  // If frame has absolutely positioned children, it needs position: relative
+  // Check if any child has x/y coordinates (absolute positioning)
+  // Note: FrameNode doesn't have x/y, but other node types do
+  const hasAbsoluteChildren = node.children.some(child => 
+    'x' in child && 'y' in child && child.x !== undefined && child.y !== undefined
+  );
+  if (hasAbsoluteChildren) {
+    styles.push(`position: relative`);
+  }
 
   if (node.backgroundColor) {
     styles.push(`background-color: ${node.backgroundColor}`);

@@ -1,7 +1,7 @@
 import { Submission } from "@prisma/client";
 import { renderTemplateWithConfig } from "@/lib/template-engine";
 import { getTemplateFormat, getNodeTemplateSchema } from "@/lib/node-registry";
-import { compileNodeGraphToHTML } from "@/lib/node-to-html-compiler";
+import { compileNodeGraphToHTML } from "@/lib/node-to-html-compiler-v2";
 import { getTemplateConfig } from "@/lib/template-registry";
 import { TemplateSchema } from "@/lib/node-types";
 import { prepareBindingData } from "@/lib/field-resolver";
@@ -39,16 +39,32 @@ export async function renderTemplate(submission: Submission): Promise<string> {
   
   // If format is explicitly "node", try node renderer first
   if (format === "node") {
-    const schema = await getNodeTemplateSchema(submission.templateFamily, variantId);
+    // For blog-image-generator, schema is generated dynamically in renderNodeTemplate
+    // For other templates, load from filesystem/database
+    let schema: TemplateSchema | null = null;
+    if (submission.templateFamily !== 'blog-image-generator') {
+      schema = await getNodeTemplateSchema(submission.templateFamily, variantId);
+    }
     
-    if (schema) {
+    // If schema exists or is blog-image-generator (generated dynamically), use node renderer
+    if (schema || submission.templateFamily === 'blog-image-generator') {
       try {
+        console.log(`[RENDER] Using node template renderer for ${submission.templateFamily}`);
         // Render using node graph compiler
+        // For blog-image-generator, schema will be generated inside renderNodeTemplate
+        // For others, pass the loaded schema
         const nodeHTML = await renderNodeTemplate(submission, schema, variantId);
+        console.log(`[RENDER] Node template rendered successfully`);
         return nodeHTML;
       } catch (error) {
-        console.error("Node template render failed, falling back to HTML:", error);
-        // Fall back to HTML renderer on error
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        console.error(`[RENDER] Node template render failed for ${submission.templateFamily}:`, errorMsg);
+        console.error("Full error object:", error);
+        // Don't fall back to HTML for blog-image-generator - it should always use node templates
+        if (submission.templateFamily === 'blog-image-generator') {
+          throw error; // Re-throw for blog-image-generator so we see the actual error
+        }
+        // Fall back to HTML renderer on error for other templates
         return renderTemplateWithConfig(submission);
       }
     } else {
@@ -65,7 +81,7 @@ export async function renderTemplate(submission: Submission): Promise<string> {
 /**
  * Render template from node graph
  */
-async function renderNodeTemplate(submission: Submission, schema: TemplateSchema, variantId?: string): Promise<string> {
+async function renderNodeTemplate(submission: Submission, schema: TemplateSchema | null, variantId?: string): Promise<string> {
   
   // Load config to get date/time formatting
   const config = await getTemplateConfig(submission.templateFamily);
@@ -74,30 +90,116 @@ async function renderNodeTemplate(submission: Submission, schema: TemplateSchema
     throw new Error(`Config not found for template family: ${submission.templateFamily}`);
   }
   
+  // Special handling for blog-image-generator: generate schema dynamically
+  let finalSchema: TemplateSchema;
+  if (submission.templateFamily === 'blog-image-generator') {
+    const uploadUrls = JSON.parse(submission.uploadUrls || '{}');
+    const selection = uploadUrls.selection;
+    const components = uploadUrls.components || [];
+    
+    if (selection && components) {
+      try {
+        const { generateBlogImageNodeSchema } = await import('@/lib/blog-image-node-generator');
+        const { DEFAULT_BLOG_IMAGE_CONFIG } = await import('@/lib/blog-image-template');
+        
+        console.log(`[RENDER] Generating blog image node schema...`);
+        console.log(`[RENDER] Selection:`, JSON.stringify(selection, null, 2));
+        console.log(`[RENDER] Components count:`, components.length);
+        
+        finalSchema = generateBlogImageNodeSchema(selection, components, DEFAULT_BLOG_IMAGE_CONFIG);
+        console.log(`[RENDER] Schema generated successfully`);
+      } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        console.error(`[RENDER] Error generating blog image node schema:`, errorMsg);
+        console.error("Full error:", error);
+        throw error;
+      }
+    } else {
+      console.error(`[RENDER] Missing data - selection:`, !!selection, `components:`, components?.length || 0);
+      throw new Error(`Blog image selection data not found - selection: ${!!selection}, components: ${components?.length || 0}`);
+    }
+  } else {
+    if (!schema) {
+      throw new Error(`Schema not found for template family: ${submission.templateFamily}`);
+    }
+    finalSchema = schema;
+  }
+  
   // Prepare data for binding using shared resolver
-  const data = prepareBindingData(submission, config);
+  let data = prepareBindingData(submission, config);
+  
+  // For blog-image-generator, use component URLs directly
+  if (submission.templateFamily === 'blog-image-generator') {
+    const uploadUrls = JSON.parse(submission.uploadUrls || '{}');
+    const selection = uploadUrls.selection;
+    const components = uploadUrls.components || [];
+    
+    if (selection && components) {
+      try {
+        const { prepareBlogImageNodeData } = await import('@/lib/blog-image-node-generator');
+        console.log(`[RENDER] Preparing blog image node data...`);
+        data = prepareBlogImageNodeData(selection, components);
+        console.log(`[RENDER] Data prepared:`, Object.keys(data));
+      } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        console.error(`[RENDER] Error preparing blog image node data:`, errorMsg);
+        console.error("Full error:", error);
+        throw error;
+      }
+    } else {
+      console.error(`[RENDER] Missing data for prepareBlogImageNodeData - selection:`, !!selection, `components:`, components?.length || 0);
+    }
+  }
   
   // Resolve color tokens
   const tokens: Record<string, string> = {};
-  if (schema.tokens.primary) {
+  if (finalSchema.tokens.primary) {
     tokens.primary = submission.primaryColor;
   }
-  if (schema.tokens.secondary) {
+  if (finalSchema.tokens.secondary) {
     tokens.secondary = submission.secondaryColor;
   }
   
   // Compile node graph to HTML
-  let html = compileNodeGraphToHTML(schema, {
-    data,
-    tokens,
-    variantId,
-  });
+  let html: string;
+  try {
+    console.log(`[RENDER] Compiling node graph to HTML...`);
+    html = compileNodeGraphToHTML(finalSchema, {
+      data,
+      tokens,
+      variantId,
+    });
+    console.log(`[RENDER] HTML compiled successfully`);
+  } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    console.error(`[RENDER] Error compiling node graph to HTML:`, errorMsg);
+    console.error("Full error:", error);
+    throw error;
+  }
   
   // Process assets (convert to base64 data URIs)
-  html = await processNodeAssets(html, config, submission, schema);
+  try {
+    console.log(`[RENDER] Processing node assets...`);
+    html = await processNodeAssets(html, config, submission, finalSchema);
+    console.log(`[RENDER] Assets processed successfully`);
+  } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    console.error(`[RENDER] Error processing node assets:`, errorMsg);
+    console.error("Full error:", error);
+    throw error;
+  }
   
   // Process fonts
-  html = await processNodeFonts(html);
+  try {
+    console.log(`[RENDER] Processing fonts...`);
+    html = await processNodeFonts(html);
+    console.log(`[RENDER] Fonts processed successfully`);
+  } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    console.error(`[RENDER] Error processing fonts:`, errorMsg);
+    console.error("Full error:", error);
+    throw error;
+  }
   
   return html;
 }

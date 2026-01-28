@@ -49,20 +49,25 @@ export default async function Home({
               {configs.map((config) => {
                 const peopleField = config.fields.find((f) => f.type === "people");
                 const maxPeople = peopleField?.maxCount || 3;
+                const isBlogImageGenerator = config.id === "blog-image-generator";
                 
                 return (
-                  <Link key={config.id} href={`/templates/${config.id}/create`}>
+                  <Link key={config.id} href={`/${config.id}/create`}>
                     <Card className="cursor-pointer hover:shadow-lg transition-shadow">
                       <CardHeader>
                         <FileText className="h-8 w-8 mb-2" />
                         <CardTitle>{config.name}</CardTitle>
                         <CardDescription>
-                          Generate a poster for {config.name} {config.height}x{config.width}
+                          {isBlogImageGenerator 
+                            ? "Generate blog images automatically using word matching and your Figma components"
+                            : `Generate a poster for ${config.name} ${config.height}x${config.width}`}
                         </CardDescription>
                       </CardHeader>
                       <CardContent>
                         <p className="text-sm text-muted-foreground">
-                          Supports 1-{maxPeople} speakers with customizable colors and formats
+                          {isBlogImageGenerator
+                            ? "Enter your blog title and let word matching select the perfect components"
+                            : `Supports 1-${maxPeople} speakers with customizable colors and formats`}
                         </p>
                       </CardContent>
                     </Card>
