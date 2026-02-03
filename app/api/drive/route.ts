@@ -1,14 +1,14 @@
 import { NextResponse } from "next/server";
-import { GOOGLE_DRIVE_FOLDER_IDS } from "@/lib/drive-config";
+import { GOOGLE_DRIVE_PARENT_FOLDER_ID } from "@/lib/drive-config";
 
 /**
  * Google Drive API route
- * Fetches folders from specified Google Drive folder IDs
- * 
+ * Lists all subfolders inside the configured parent folder.
+ *
  * Environment variables needed:
  * - GOOGLE_DRIVE_API_KEY: Your Google Drive API key
- * 
- * Folder IDs are configured in: lib/drive-config.ts
+ *
+ * Parent folder ID is configured in: lib/drive-config.ts
  */
 
 interface DriveFolder {
@@ -21,7 +21,7 @@ interface DriveFolder {
 
 export async function GET() {
   const apiKey = process.env.GOOGLE_DRIVE_API_KEY;
-  const folderIds = GOOGLE_DRIVE_FOLDER_IDS;
+  const parentId = GOOGLE_DRIVE_PARENT_FOLDER_ID;
 
   if (!apiKey) {
     return NextResponse.json(
@@ -30,43 +30,58 @@ export async function GET() {
     );
   }
 
-  if (folderIds.length === 0) {
+  if (!parentId) {
     return NextResponse.json(
-      { error: "No folder IDs configured. Add folder IDs to lib/drive-config.ts" },
+      {
+        error:
+          "No parent folder ID configured. Set GOOGLE_DRIVE_PARENT_FOLDER_ID in lib/drive-config.ts",
+      },
       { status: 500 }
     );
   }
 
   try {
-    const folders: DriveFolder[] = [];
+    // List all subfolders of the parent folder
+    const q = encodeURIComponent(
+      `'${parentId}' in parents and mimeType='application/vnd.google-apps.folder'`
+    );
+    const listUrl = `https://www.googleapis.com/drive/v3/files?key=${apiKey}&q=${q}&fields=files(id,name,mimeType,webViewLink,folderColorRgb)&orderBy=name`;
 
-    // Fetch folders from configured folder IDs
-    for (const folderId of folderIds) {
-      try {
-        const folderResponse = await fetch(
-          `https://www.googleapis.com/drive/v3/files/${folderId}?key=${apiKey}&fields=id,name,mimeType,webViewLink,folderColorRgb`
-        );
+    const response = await fetch(listUrl);
 
-        if (folderResponse.ok) {
-          const folder = await folderResponse.json();
-          if (folder.mimeType === "application/vnd.google-apps.folder") {
-            folders.push({
-              id: folder.id,
-              name: folder.name,
-              mimeType: folder.mimeType,
-              webViewLink: folder.webViewLink,
-              folderColorRgb: folder.folderColorRgb,
-            });
-          }
-        }
-      } catch (error) {
-        console.error(`Error fetching folder ${folderId}:`, error);
-      }
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Google Drive API error:", response.status, errorText);
+      return NextResponse.json(
+        { error: "Failed to fetch subfolders from Google Drive" },
+        { status: response.status }
+      );
     }
+
+    const data = await response.json();
+    const files = data.files || [];
+
+    const folders: DriveFolder[] = files.map(
+      (f: {
+        id: string;
+        name: string;
+        mimeType: string;
+        webViewLink?: string;
+        folderColorRgb?: string;
+      }) => ({
+        id: f.id,
+        name: f.name,
+        mimeType: f.mimeType,
+        webViewLink:
+          f.webViewLink ||
+          `https://drive.google.com/drive/folders/${f.id}`,
+        folderColorRgb: f.folderColorRgb,
+      })
+    );
 
     return NextResponse.json({ items: folders });
   } catch (error) {
-    console.error("Error fetching Google Drive items:", error);
+    console.error("Error fetching Google Drive subfolders:", error);
     return NextResponse.json(
       { error: "Failed to fetch Google Drive items" },
       { status: 500 }
