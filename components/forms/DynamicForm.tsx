@@ -283,35 +283,40 @@ export default function DynamicForm({ templateFamily, config }: DynamicFormProps
     }
   };
 
+  const hasColorFields = config.fields.some((f) => f.type === "color");
+
   return (
     <form onSubmit={handleSubmit(onSubmit, onError)} className="space-y-8">
-      {/* Color Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Color</CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-4 md:grid-cols-2">
-          {config.fields
-            .filter((f) => f.type === "color")
-            .map((field) => (
-              <div key={field.name}>
-                <Label htmlFor={field.name}>{field.label}</Label>
-                <Input
-                  id={field.name}
-                  type="color"
-                  defaultValue={field.default || "#3D9DFF"}
-                  {...register(field.name as keyof FormData)}
-                  className="h-10 w-full"
-                />
-                {errors[field.name as keyof typeof errors] && (
-                  <p className="text-sm text-destructive mt-1">
-                    {errors[field.name as keyof typeof errors]?.message as string}
-                  </p>
-                )}
-              </div>
-            ))}
-        </CardContent>
-      </Card>
+      
+      {/* Color Section - only when template has color fields in config */}
+      {hasColorFields && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Color</CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-4 md:grid-cols-2">
+            {config.fields
+              .filter((f) => f.type === "color")
+              .map((field) => (
+                <div key={field.name}>
+                  <Label htmlFor={field.name}>{field.label}</Label>
+                  <Input
+                    id={field.name}
+                    type="color"
+                    defaultValue={field.default || "#3D9DFF"}
+                    {...register(field.name as keyof FormData)}
+                    className="h-10 w-full"
+                  />
+                  {errors[field.name as keyof typeof errors] && (
+                    <p className="text-sm text-destructive mt-1">
+                      {errors[field.name as keyof typeof errors]?.message as string}
+                    </p>
+                  )}
+                </div>
+              ))}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Output Settings */}
       <Card>
