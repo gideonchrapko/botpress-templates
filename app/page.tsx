@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import SignInButton from "@/components/SignInButton";
 import DriveGallery from "@/components/DriveGallery";
+import { DRIVE_FOLDER_IDS } from "@/lib/drive-config";
 import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileText } from "lucide-react";
@@ -30,6 +31,17 @@ export default async function Home({
             Create templates and access design resources
           </p>
         </div>
+
+        {/* Branding Assets Section */}
+        <section className="mb-12">
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold">Branding Assets</h2>
+            <p className="text-muted-foreground mt-1">
+              Access Branding Assets from Google Drive
+            </p>
+          </div>
+          <DriveGallery folderId={DRIVE_FOLDER_IDS.branding} />
+        </section>
 
         {/* Templates Section */}
         <section className="mb-12">
@@ -86,7 +98,7 @@ export default async function Home({
               Access folders from Google Drive
             </p>
           </div>
-          <DriveGallery />
+          <DriveGallery folderId={DRIVE_FOLDER_IDS.designResources} />
         </section>
       </div>
     );

@@ -1,14 +1,15 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { GOOGLE_DRIVE_PARENT_FOLDER_ID } from "@/lib/drive-config";
 
 /**
  * Google Drive API route
- * Lists all subfolders inside the configured parent folder.
+ * Lists all subfolders inside a parent folder.
+ *
+ * Query params:
+ * - folderId (optional): Google Drive folder ID. If omitted, uses default from lib/drive-config.ts
  *
  * Environment variables needed:
  * - GOOGLE_DRIVE_API_KEY: Your Google Drive API key
- *
- * Parent folder ID is configured in: lib/drive-config.ts
  */
 
 interface DriveFolder {
@@ -19,9 +20,11 @@ interface DriveFolder {
   folderColorRgb?: string;
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   const apiKey = process.env.GOOGLE_DRIVE_API_KEY;
-  const parentId = GOOGLE_DRIVE_PARENT_FOLDER_ID;
+  const { searchParams } = new URL(request.url);
+  const folderIdParam = searchParams.get("folderId");
+  const parentId = folderIdParam?.trim() || GOOGLE_DRIVE_PARENT_FOLDER_ID;
 
   if (!apiKey) {
     return NextResponse.json(
@@ -34,9 +37,9 @@ export async function GET() {
     return NextResponse.json(
       {
         error:
-          "No parent folder ID configured. Set GOOGLE_DRIVE_PARENT_FOLDER_ID in lib/drive-config.ts",
+          "No folder ID provided. Pass ?folderId=... or set GOOGLE_DRIVE_PARENT_FOLDER_ID in lib/drive-config.ts",
       },
-      { status: 500 }
+      { status: 400 }
     );
   }
 

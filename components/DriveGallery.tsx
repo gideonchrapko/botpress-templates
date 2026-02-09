@@ -13,7 +13,11 @@ interface DriveFolder {
   folderColorRgb?: string;
 }
 
-export default function DriveGallery() {
+interface DriveGalleryProps {
+  folderId?: string;
+}
+
+export default function DriveGallery({ folderId }: DriveGalleryProps) {
   const [folders, setFolders] = useState<DriveFolder[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -21,9 +25,13 @@ export default function DriveGallery() {
   useEffect(() => {
     async function fetchFolders() {
       try {
-        const response = await fetch("/api/drive");
+        const url = folderId
+          ? `/api/drive?folderId=${encodeURIComponent(folderId)}`
+          : "/api/drive";
+        const response = await fetch(url);
         if (!response.ok) {
-          throw new Error("Failed to fetch folders");
+          const data = await response.json().catch(() => ({}));
+          throw new Error(data.error || "Failed to fetch folders");
         }
         const data = await response.json();
         setFolders(data.items || []);
@@ -35,7 +43,7 @@ export default function DriveGallery() {
     }
 
     fetchFolders();
-  }, []);
+  }, [folderId]);
 
   if (loading) {
     return (
