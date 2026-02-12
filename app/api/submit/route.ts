@@ -170,21 +170,16 @@ export async function POST(req: NextRequest) {
     // Get config to determine which fields are available
     const config = await getTemplateConfig(templateFamily);
     
-    // Collect all dynamic text/date/time fields from form data
-    const dynamicFields: Record<string, string | Date> = {};
+    // Collect all dynamic text/date/time fields from form data (always store so template engine can replace)
+    const dynamicFields: Record<string, string> = {};
     if (config) {
       for (const field of config.fields) {
         if (field.type === "text" || field.type === "time") {
-          const value = formData.get(field.name) as string;
-          if (value) {
-            dynamicFields[field.name] = value;
-          }
+          const value = formData.get(field.name) as string | null;
+          dynamicFields[field.name] = value ?? "";
         } else if (field.type === "date") {
-          const value = formData.get(field.name) as string;
-          if (value) {
-            // Store as ISO string for JSON serialization
-            dynamicFields[field.name] = new Date(value).toISOString();
-          }
+          const value = formData.get(field.name) as string | null;
+          dynamicFields[field.name] = value ? new Date(value).toISOString() : "";
         }
       }
     }
@@ -192,7 +187,7 @@ export async function POST(req: NextRequest) {
     // Backwards compatibility: use hardcoded fields if they exist, otherwise use defaults
     const eventTitle = (formData.get("eventTitle") as string) || dynamicFields.eventTitle as string || "";
     const eventDateValue = formData.get("eventDate") as string;
-    const eventDate = eventDateValue ? new Date(eventDateValue) : (dynamicFields.eventDate as Date || new Date());
+    const eventDate = eventDateValue ? new Date(eventDateValue) : (dynamicFields.eventDate ? new Date(dynamicFields.eventDate) : new Date());
     const doorTime = (formData.get("doorTime") as string) || dynamicFields.doorTime as string || "18:00";
     
     // Get address from config (config already loaded above)

@@ -195,19 +195,14 @@ export default function DynamicForm({ templateFamily, config }: DynamicFormProps
         formData.append("formats", format);
       });
       
-      // Append all dynamic text/date/time fields from config
+      // Append all dynamic text/date/time fields from config (always send every field so server has keys for replacement)
       config.fields.forEach((field) => {
-        if (field.type === "text") {
+        if (field.type === "text" || field.type === "time") {
           const value = data[field.name as keyof FormData];
-          // For optional fields, append even if empty. For required fields, value should exist.
-          if (field.optional || value) {
-            formData.append(field.name, (value as string) || "");
-          }
-        } else if (field.type === "date" && data[field.name as keyof FormData]) {
-          const dateValue = data[field.name as keyof FormData] as Date;
-          formData.append(field.name, dateValue.toISOString());
-        } else if (field.type === "time" && data[field.name as keyof FormData]) {
-          formData.append(field.name, data[field.name as keyof FormData] as string);
+          formData.append(field.name, (value as string) ?? "");
+        } else if (field.type === "date") {
+          const dateValue = data[field.name as keyof FormData] as Date | undefined;
+          formData.append(field.name, dateValue ? new Date(dateValue).toISOString() : "");
         }
       });
       

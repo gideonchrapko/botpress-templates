@@ -56,6 +56,11 @@ export interface TemplateConfig {
 
 const configCache: Map<string, TemplateConfig> = new Map();
 
+/** Clear cached config for a family (call after re-import so next request loads fresh config) */
+export function clearTemplateConfigCache(family: string): void {
+  configCache.delete(family);
+}
+
 export async function getTemplateConfig(family: string): Promise<TemplateConfig | null> {
   // Check cache first
   if (configCache.has(family)) {

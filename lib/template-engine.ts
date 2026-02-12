@@ -230,13 +230,19 @@ function replaceField(
   for (const replacement of field.replacements) {
     if (!replacement || !replacement.pattern) continue;
     if (replacement.regex) {
-      // Use regex replacement
       const flags = replacement.flags || "g";
       const regex = new RegExp(replacement.regex, flags);
       html = html.replace(regex, replacementValue);
     } else {
-      // Simple string replacement
-      html = html.replace(new RegExp(replacement.pattern, "g"), replacementValue);
+      // Literal string replacement (safe for {{fieldName}} and any special chars)
+      const before = html;
+      html = html.split(replacement.pattern).join(replacementValue);
+      // If literal didn't match, try flexible {{ fieldName }} (optional inner spaces) for text/date/time
+      if (html === before && (field.type === "text" || field.type === "date" || field.type === "time") && field.name) {
+        const escapedName = field.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        const flexiblePattern = new RegExp(`\\{\\{\\s*${escapedName}\\s*\\}\\}`, "g");
+        html = html.replace(flexiblePattern, replacementValue);
+      }
     }
   }
 
@@ -441,21 +447,28 @@ export async function renderTemplateWithConfig(submission: Submission): Promise<
       throw new Error(`Failed to process color replacements: ${error instanceof Error ? error.message : String(error)}`);
     }
 
-    // Parse uploadUrls to get standalone image uploads
+    // Parse uploadUrls once: images + dynamic text/date fields (fields from form)
     let imageUploads: Record<string, string> = {};
+    let dynamicFields: Record<string, string> = {};
     try {
       if (submission.uploadUrls && typeof submission.uploadUrls === "string" && submission.uploadUrls.trim() !== "") {
         const parsed = JSON.parse(submission.uploadUrls);
         if (parsed.images && typeof parsed.images === "object") {
           imageUploads = parsed.images;
         }
-        // Also handle legacy format (array of headshots)
-        if (Array.isArray(parsed) || (parsed.headshots && Array.isArray(parsed.headshots))) {
-          // Legacy format, imageUploads stays empty
+        if (parsed.fields && typeof parsed.fields === "object") {
+          dynamicFields = parsed.fields;
         }
       }
     } catch {
-      // If parsing fails, imageUploads stays empty
+      // If parsing fails, keep empty
+    }
+
+    if (process.env.NODE_ENV === "development") {
+      console.log("[TEMPLATE-ENGINE] uploadUrls.fields keys:", Object.keys(dynamicFields));
+      console.log("[TEMPLATE-ENGINE] uploadUrls.fields sample:", JSON.stringify(dynamicFields));
+      const placeholderCount = (html.match(/\{\{[^}]+\}\}/g) || []).length;
+      console.log("[TEMPLATE-ENGINE] HTML placeholders ({{...}}) count:", placeholderCount);
     }
 
     // Process all fields
@@ -465,44 +478,30 @@ export async function renderTemplateWithConfig(submission: Submission): Promise<
           if (field.type === "people") {
             html = processPeople(html, field, people, uploadUrls);
           } else if (field.type === "image" && field.name !== "headshot") {
-            // Handle standalone image fields (logo, etc.)
             const imageUrl = imageUploads[field.name];
             if (imageUrl && field.replacements) {
               for (const replacement of field.replacements) {
                 if (replacement.pattern) {
-                  // Replace both src="..." and href="..." patterns for SVG
                   html = html.replace(new RegExp(`src="${replacement.pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}"`, "g"), `src="${imageUrl}"`);
                   html = html.replace(new RegExp(`href="${replacement.pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}"`, "g"), `href="${imageUrl}"`);
-                  // Also replace just the placeholder text
-                  html = html.replace(new RegExp(replacement.pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), "g"), imageUrl);
+                  html = html.split(replacement.pattern).join(imageUrl);
                 }
               }
             }
           } else {
-            // Get value from submission
-            // First try direct property (for backwards compatibility with eventTitle, etc.)
-            let value = (submission as any)[field.name];
-            
-            // If not found, try reading from uploadUrls.fields (for dynamic fields)
+            // Text / date / time / color: value from submission column or dynamicFields
+            let value: unknown = (submission as any)[field.name];
             if (value === undefined || value === null) {
-              try {
-                if (submission.uploadUrls && typeof submission.uploadUrls === "string") {
-                  const parsed = JSON.parse(submission.uploadUrls);
-                  if (parsed.fields && parsed.fields[field.name] !== undefined) {
-                    value = parsed.fields[field.name];
-                    // If it's a date field and value is an ISO string, convert to Date
-                    if (field.type === "date" && typeof value === "string") {
-                      value = new Date(value);
-                    }
-                  }
-                }
-              } catch {
-                // If parsing fails, value stays undefined
+              const fromFields = dynamicFields[field.name];
+              if (fromFields !== undefined && fromFields !== null) {
+                value = field.type === "date" && fromFields ? new Date(fromFields) : fromFields;
               }
             }
-            
-            // Process field even if value is undefined/null (for optional fields)
-            // replaceField will handle missing values gracefully
+            if (process.env.NODE_ENV === "development" && (field.type === "text" || field.type === "date" || field.type === "time")) {
+              const pattern = field.replacements?.[0]?.pattern;
+              const inHtml = pattern ? html.includes(pattern) : false;
+              console.log(`[TEMPLATE-ENGINE] field "${field.name}" (${field.type}) value=${JSON.stringify(value)} pattern=${JSON.stringify(pattern)} inHtml=${inHtml}`);
+            }
             html = replaceField(html, field, value, submission);
           }
         } catch (error) {

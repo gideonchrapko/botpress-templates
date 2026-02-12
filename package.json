@@ -13,6 +13,7 @@
     "postinstall": "node scripts/setup-schema.js && bunx prisma generate",
     "schema:setup": "node scripts/setup-schema.js",
     "test:figma": "bun run scripts/test-figma-import.ts",
+    "figma:to-import": "bun run scripts/raw-figma-to-import.ts",
     "template:delete": "bun run scripts/delete-template.ts",
     "template:list": "bun run scripts/delete-template.ts --list",
     "template:import": "bun run scripts/test-import-direct.ts"

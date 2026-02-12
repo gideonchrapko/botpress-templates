@@ -215,6 +215,16 @@ Allow importing from Figma and Illustrator
 - Build Illustrator import (via SVG/PDF)
 - Create template editor UI
 
+**Strategy: Figma as single source of truth**
+
+The goal is one config file from Figma that’s rich enough to drive any template without hardcoding in the app.
+
+1. **Start from one real template** – Pick a template you already use (e.g. blog image or event poster). Export everything Figma already gives you (node tree, styles, constraints, text styles). That’s v0 of your config.
+2. **Run it through your app and list gaps** – Feed that export into your generator. Every place you have to “guess” or hardcode (e.g. “center this”, “this text is single-line”, “this color is primary”) is a missing piece in the config. Turn each gap into a required field or rule in the schema.
+3. **Put the missing data in the plugin, not the generator** – For each gap, add logic in the Figma plugin so the next export includes that information. Keep the web generator a dumb translator: it only does what the config explicitly says.
+4. **Repeat with 2–3 more templates** – Export different layouts. Each template will reveal new edge cases; add those to the schema and to the plugin. After a few rounds you’ll have one schema that can describe all of them.
+5. **Treat the schema as the contract** – Document the config format (e.g. TypeScript types or JSON schema). The plugin’s job is to produce valid config; the app’s job is to consume it. Figma stays the single source of truth because every design decision you need is encoded in that one config file the plugin exports.
+
 ### Phase 4: Variants (Weeks 13-14)
 Replace separate HTML files with variant overrides
 - Update compiler for variants

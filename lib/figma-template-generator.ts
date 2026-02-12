@@ -14,8 +14,8 @@ import { TemplateConfig } from "./template-registry";
  * Detects patterns like "{{eventTitle}}" or "{{logo}}"
  */
 function extractBinding(name: string): string | null {
-  const match = name.match(/\{\{(\w+)\}\}/);
-  return match ? match[1] : null;
+  const match = name.match(/\{\{\s*([\w-]+)\s*\}\}/);
+  return match ? match[1].trim() : null;
 }
 
 /**
@@ -59,15 +59,14 @@ function findNodesByBinding(nodes: FigmaExportNode[], bindingName: string): Figm
 function findAllRenderableNodes(nodes: FigmaExportNode[]): Array<{ node: FigmaExportNode; binding?: string; isStatic: boolean; parentFrame?: FigmaExportNode }> {
   const renderable: Array<{ node: FigmaExportNode; binding?: string; isStatic: boolean; parentFrame?: FigmaExportNode }> = [];
   
-  function traverse(node: FigmaExportNode, parentFrame?: FigmaExportNode) {
+  function traverse(node: FigmaExportNode, parentFrame?: FigmaExportNode, immediateParent?: FigmaExportNode) {
     const binding = extractBinding(node.name);
     
     // Handle FRAME nodes with bindings (auto-expanding text frames)
     if (node.type === "FRAME" && binding) {
       renderable.push({ node, binding, isStatic: false });
-      // Still traverse children for nested elements
       if (node.children) {
-        node.children.forEach(child => traverse(child, node));
+        node.children.forEach(child => traverse(child, node, node));
       }
       return;
     }
@@ -75,7 +74,7 @@ function findAllRenderableNodes(nodes: FigmaExportNode[]): Array<{ node: FigmaEx
     // Skip GROUP nodes (containers only, no bindings)
     if (node.type === "GROUP") {
       if (node.children) {
-        node.children.forEach(child => traverse(child, parentFrame));
+        node.children.forEach(child => traverse(child, parentFrame, node));
       }
       return;
     }
@@ -86,32 +85,39 @@ function findAllRenderableNodes(nodes: FigmaExportNode[]): Array<{ node: FigmaEx
     // Skip FRAME nodes without bindings (just containers) - but track them as parents
     if (node.type === "FRAME" && !binding) {
       if (node.children) {
-        node.children.forEach(child => traverse(child, node));
+        node.children.forEach(child => traverse(child, node, node));
       }
       return;
     }
     
     // Include nodes with bindings
     if (binding) {
-      // If this is a TEXT node inside a FRAME, render the FRAME instead
-      if (node.type === "TEXT" && parentFrame && parentFrame.type === "FRAME") {
+      // Only render FRAME (with TEXT child) when this TEXT is a *direct* child of that FRAME.
+      // TEXT inside GROUP (or other container) must be rendered as standalone text node so the placeholder is emitted.
+      if (node.type === "TEXT" && parentFrame && parentFrame.type === "FRAME" && immediateParent === parentFrame) {
         renderable.push({ node: parentFrame, binding, isStatic: false, parentFrame: undefined });
       } else {
         renderable.push({ node, binding, isStatic: false, parentFrame });
       }
     }
-    // Skip VECTOR nodes (decorative, shouldn't be rendered)
-    // Include static images/SVGs (RECTANGLE with imageRef, or COMPONENT/INSTANCE)
+    // Include static images (RECTANGLE with imageRef, or COMPONENT/INSTANCE)
+    // Include static shapes: RECTANGLE/VECTOR/ELLIPSE with SOLID fill, or any such shape (even no fill) so vectors/decorations appear
     else if (
       (node.type === "RECTANGLE" && node.fills?.some(f => f.type === "IMAGE" && f.imageRef)) ||
       node.type === "COMPONENT" ||
       node.type === "INSTANCE"
     ) {
       renderable.push({ node, isStatic: true });
+    } else if (
+      node.type === "RECTANGLE" ||
+      node.type === "VECTOR" ||
+      node.type === "ELLIPSE"
+    ) {
+      renderable.push({ node, isStatic: true });
     }
     
     if (node.children) {
-      node.children.forEach(child => traverse(child, currentParentFrame));
+      node.children.forEach(child => traverse(child, currentParentFrame, node));
     }
   }
   
@@ -196,26 +202,28 @@ function generateHTMLTemplate(exportData: FigmaExport): string {
   const renderedFrames = new Set<string>();
   for (const { node, binding, isStatic, parentFrame } of renderableNodes) {
     if (isStatic) {
-      // Static SVG/image (no binding - hardcoded in template)
+      // Static image (no binding - hardcoded in template)
       const imageRef = node.fills?.find(f => f.type === "IMAGE" && f.imageRef)?.imageRef;
       if (imageRef && images?.[imageRef]) {
-        // Use the exported image data directly
         const imageStyle = `position: absolute; left: ${node.x}px; top: ${node.y}px; width: ${node.width}px; height: ${node.height}px; object-fit: contain;`;
         html += `
     <img src="${images[imageRef]}" alt="${node.name || 'Image'}" style="${imageStyle}">`;
-      } else if (node.type === "VECTOR") {
-        // Skip VECTOR nodes - they're decorative and shouldn't be rendered
-        // (If you need to render vectors, extract SVG paths from Figma export)
+      } else {
+        // Static shape (RECTANGLE, VECTOR, or ELLIPSE) - SOLID fill or fallback for stroke-only/no-fill
+        const solidFill = node.fills?.find((f: any) => f.type === "SOLID" && f.color);
+        const bgColor = solidFill?.color ? figmaColorToHex(solidFill.color) : "rgba(0,0,0,0.08)";
+        const isEllipse = node.type === "ELLIPSE";
+        const shapeStyle = `position: absolute; left: ${node.x}px; top: ${node.y}px; width: ${node.width}px; height: ${node.height}px; background-color: ${bgColor};${isEllipse ? " border-radius: 50%;" : ""}`;
+        html += `
+    <div style="${shapeStyle}"></div>`;
       }
     } else if (binding) {
       // Node with binding (user upload or text field)
       const bindingInfo = allBindings.get(binding);
       if (bindingInfo) {
         if (bindingInfo.type === "image") {
-          // Image/logo fields (user uploads) - center horizontally and vertically
-          const centerX = (width - node.width) / 2;
-          const centerY = (height - node.height) / 2;
-          const imageStyle = `position: absolute; left: ${centerX}px; top: ${centerY}px; width: ${node.width}px; height: ${node.height}px; object-fit: contain; object-position: center;`;
+          // Image/logo fields (user uploads) - use node position from Figma
+          const imageStyle = `position: absolute; left: ${node.x}px; top: ${node.y}px; width: ${node.width}px; height: ${node.height}px; object-fit: contain; object-position: center;`;
           html += `
     <img src="{{${binding}}}" alt="${generateLabel(binding)}" style="${imageStyle}">`;
         } else if (node.type === "FRAME" && node.children) {

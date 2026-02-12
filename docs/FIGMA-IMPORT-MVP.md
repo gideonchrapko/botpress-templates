@@ -31,7 +31,7 @@ This diagram shows the complete flow from a Figma export JSON to a working templ
 ┌─────────────────────────────────────────────────────────────────┐
 │ 3. Figma Template Generator                                     │
 │    lib/figma-template-generator.ts                              │
-│    ┌─────────────────────────────────────────────────────────┐ │
+│    ┌───────────────────────────────────────────────────────── ┐ │
 │    │ generateTemplateFromFigma()                              │ │
 │    │  ├─ generateConfig() → config.json                       │ │
 │    │  │   - Extracts bindings from node names                 │ │
@@ -336,6 +336,49 @@ This decoration SVG will appear in your template automatically, no form field ne
   "message": "Template \"Simple Monthly Poster\" created successfully!"
 }
 ```
+
+## Getting v0 from the Figma API
+
+Use this to start the "one real template → export everything → v0 config" loop. No plugin required.
+
+1. **Token**  
+   Figma → Settings → Account → [Personal access tokens](https://www.figma.com/developers/api#access-tokens). Create one. Add to `.env`:  
+   `FIGMA_ACCESS_TOKEN=your_token`
+
+2. **File key**  
+   From the Figma file URL: `figma.com/file/abc123/MyFile` → file key is `abc123`.
+
+3. **Export raw file**  
+   One file key = one Figma file (all pages/frames). To export a single template when you have many in one file, pass the frame’s node ID:
+   ```bash
+   FIGMA_FILE_KEY=abc123 bun run scripts/export-figma-file.ts
+   # Or only one frame:
+   FIGMA_FILE_KEY=abc123 FIGMA_NODE_ID=123:456 bun run scripts/export-figma-file.ts
+   ```  
+   Get the node ID: in Figma, right‑click the frame → **Copy link to selection** → use the `node-id=` value from the URL.  
+   Writes `examples/figma-raw-<file_key>.json` (full file) and, if `FIGMA_NODE_ID` is set, `examples/figma-raw-<file_key>-<node_id>.json` (just that frame).
+
+4. **Turn it into import format**  
+   Run the converter script (it maps raw Figma nodes to the shape the import API expects):
+   ```bash
+   bun run figma:to-import examples/figma-raw-<file_key>-<node_id>.json
+   ```
+   Or with no args if you have exactly one `figma-raw-*-*.json` in `examples/`: `bun run figma:to-import`.  
+   This writes `examples/figma-import-<name>.json`. To get form fields (bindings), rename layers in Figma to `{{fieldName}}` (e.g. `{{eventTitle}}`, `{{logo}}`) and re-export the frame, then run the converter again. You can also hand-edit the generated JSON or use `examples/figma-export-example.json` as a reference.
+
+5. **Import and test**  
+   ```bash
+   bun run dev
+   # Sign in, then:
+   curl -X POST http://localhost:3000/api/import/figma \
+     -H "Content-Type: application/json" \
+     -H "Cookie: next-auth.session-token=YOUR_TOKEN" \
+     -d @examples/figma-import-<name>.json
+   ```  
+   Open the app, go to the new template, fill the form, generate. Check layout and bindings.
+
+6. **Iterate**  
+   If something’s wrong: fix the Figma file (names, structure) or your mapping (script/hand edit). Re-export from API if you changed Figma (step 3), then re-map and re-import. Repeat until the generated template matches and the config is good enough to treat as v0.
 
 ## Testing the MVP
 
@@ -681,6 +724,8 @@ This ensures:
 5. **Perfect Schema**: Define export schema with metadata to eliminate hardcoded rules (see MIGRATION-ROADMAP.md Step 1)
 
 ## Roadmap Alignment
+
+The design-tool strategy is **Figma as single source of truth**: start from one real template, export what Figma gives you (node tree, styles, constraints), then iterate. See the "Strategy: Figma as Single Source of Truth" section in `MIGRATION-ROADMAP.md`.
 
 This MVP fits into **Phase 3: Design Tool Import** from the migration roadmap:
 - ✅ Basic Figma export format

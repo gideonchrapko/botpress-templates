@@ -3,16 +3,18 @@
  * Accepts Figma export data and generates template files
  */
 
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { generateTemplateFromFigma } from "@/lib/figma-template-generator";
 import { FigmaExport } from "@/lib/figma-import-types";
+import { clearTemplateConfigCache } from "@/lib/template-registry";
 
-export async function POST(req: NextRequest) {
+export const POST = auth(async (req) => {
   try {
-    // Check authentication
-    const session = await auth();
-    if (!session?.user?.email || !session.user.email.endsWith("@botpress.com")) {
+    const session = req.auth;
+    const isBotpress = session?.user?.email?.endsWith("@botpress.com");
+    const allowInDev = process.env.NODE_ENV === "development" && session?.user;
+    if (!session?.user?.email || (!isBotpress && !allowInDev)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -37,6 +39,8 @@ export async function POST(req: NextRequest) {
 
     // Generate template files
     const result = await generateTemplateFromFigma(figmaExport);
+    // So submit/render use fresh config (no stale cache after re-import)
+    clearTemplateConfigCache(result.templateId);
 
     return NextResponse.json({
       success: true,
@@ -53,4 +57,4 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

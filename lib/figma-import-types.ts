@@ -6,7 +6,7 @@
 export interface FigmaExportNode {
   id: string;
   name: string;
-  type: "TEXT" | "RECTANGLE" | "FRAME" | "GROUP" | "VECTOR" | "COMPONENT" | "INSTANCE";
+  type: "TEXT" | "RECTANGLE" | "FRAME" | "GROUP" | "VECTOR" | "ELLIPSE" | "COMPONENT" | "INSTANCE";
   x: number;
   y: number;
   width: number;

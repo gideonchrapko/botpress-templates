@@ -1,5 +1,7 @@
 # Schema System Implementation Complexity
 
+> **Context:** This doc describes a possible future schema-driven app (forms + renderer from schema). Current focus is **Phase 3: Figma export schema and design-tool import**—see `MIGRATION-ROADMAP.md`.
+
 ## TL;DR
 
 **Minimal Version (Core Features)**: ~5-6 new files, **Low-Medium complexity**

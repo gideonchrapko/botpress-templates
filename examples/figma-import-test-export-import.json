@@ -1,0 +1,626 @@
+{
+  "name": "test-export-import",
+  "width": 1920,
+  "height": 1080,
+  "nodes": [
+    {
+      "id": "794:4044",
+      "name": "test-export-import",
+      "type": "FRAME",
+      "x": 0,
+      "y": 0,
+      "width": 1920,
+      "height": 1080,
+      "children": [
+        {
+          "id": "540:1845",
+          "name": "October",
+          "type": "GROUP",
+          "x": 0,
+          "y": 0,
+          "width": 1920,
+          "height": 1080,
+          "children": [
+            {
+              "id": "540:1846",
+              "name": "Rectangle 1",
+              "type": "RECTANGLE",
+              "x": 0,
+              "y": 0,
+              "width": 1920,
+              "height": 1080,
+              "fills": [
+                {
+                  "type": "SOLID",
+                  "color": {
+                    "r": 0.95686274766922,
+                    "g": 0.95686274766922,
+                    "b": 0.95686274766922,
+                    "a": 1
+                  }
+                }
+              ]
+            },
+            {
+              "id": "540:1847",
+              "name": "Rectangle 13",
+              "type": "VECTOR",
+              "x": 582.52,
+              "y": 364.37,
+              "width": 1337.49,
+              "height": 361.54,
+              "fills": [
+                {
+                  "type": "SOLID",
+                  "color": {
+                    "r": 0.7098039388656616,
+                    "g": 0.8549019694328308,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ]
+            },
+            {
+              "id": "540:1848",
+              "name": "Rectangle 4",
+              "type": "VECTOR",
+              "x": 582.52,
+              "y": 725.9,
+              "width": 1337.49,
+              "height": 354.1,
+              "fills": [
+                {
+                  "type": "SOLID",
+                  "color": {
+                    "r": 0.2373422533273697,
+                    "g": 0.617020308971405,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ]
+            },
+            {
+              "id": "540:1849",
+              "name": "Rectangle 12",
+              "type": "RECTANGLE",
+              "x": 1.57,
+              "y": 364.37,
+              "width": 580.94,
+              "height": 715.63,
+              "fills": [
+                {
+                  "type": "SOLID",
+                  "color": {
+                    "r": 0.2373422533273697,
+                    "g": 0.617020308971405,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ]
+            },
+            {
+              "id": "540:1943",
+              "name": "{{dateDoors}}",
+              "type": "TEXT",
+              "x": 62.79,
+              "y": 399.69,
+              "width": 442.05,
+              "height": 624.81,
+              "fills": [
+                {
+                  "type": "SOLID",
+                  "color": {
+                    "r": 0.95686274766922,
+                    "g": 0.95686274766922,
+                    "b": 0.95686274766922,
+                    "a": 1
+                  }
+                }
+              ],
+              "characters": "Thursday, \nNovember 20\nDoors open @ 6:00PM",
+              "style": {
+                "fontFamily": "Aspekta",
+                "fontSize": 48,
+                "fontWeight": 500,
+                "textAlign": "LEFT",
+                "fill": "#f4f4f4"
+              }
+            },
+            {
+              "id": "540:1850",
+              "name": "speaker-image",
+              "type": "GROUP",
+              "x": 1563.06,
+              "y": 740.24,
+              "width": 334.78,
+              "height": 325.43,
+              "children": [
+                {
+                  "id": "540:1851",
+                  "name": "speaker-mask",
+                  "type": "VECTOR",
+                  "x": 1563.06,
+                  "y": 740.24,
+                  "width": 334.78,
+                  "height": 325.43,
+                  "fills": [
+                    {
+                      "type": "SOLID",
+                      "color": {
+                        "r": 1,
+                        "g": 0.615686297416687,
+                        "b": 0,
+                        "a": 1
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": "540:1852",
+                  "name": "{{speakerImage-2}}",
+                  "type": "RECTANGLE",
+                  "x": 1563.06,
+                  "y": 740.24,
+                  "width": 334.78,
+                  "height": 325.43,
+                  "fills": [
+                    {
+                      "type": "IMAGE",
+                      "imageRef": "5628a4351405b56a99bfe0963a1e1dc309ffa3d8"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "540:1855",
+              "name": "{{name-2}}",
+              "type": "TEXT",
+              "x": 627.13,
+              "y": 767.32,
+              "width": 419.55,
+              "height": 257.17,
+              "fills": [
+                {
+                  "type": "SOLID",
+                  "color": {
+                    "r": 0,
+                    "g": 0,
+                    "b": 0,
+                    "a": 1
+                  }
+                }
+              ],
+              "characters": "Alexandre Bouchard\nCEO & Co-Founder \u0003of Hookdeck",
+              "style": {
+                "fontFamily": "Aspekta",
+                "fontSize": 113.47769165039062,
+                "fontWeight": 500,
+                "textAlign": "LEFT",
+                "fill": "#000000"
+              }
+            },
+            {
+              "id": "540:1856",
+              "name": "{{talkTitle-2 }}",
+              "type": "TEXT",
+              "x": 1133.23,
+              "y": 767.32,
+              "width": 347.59,
+              "height": 263.22,
+              "fills": [
+                {
+                  "type": "SOLID",
+                  "color": {
+                    "r": 0,
+                    "g": 0,
+                    "b": 0,
+                    "a": 1
+                  }
+                }
+              ],
+              "characters": "Webhooks at Scale: Best Practices, Lessons Learned",
+              "style": {
+                "fontFamily": "Aspekta",
+                "fontSize": 30,
+                "fontWeight": 500,
+                "textAlign": "LEFT",
+                "fill": "#000000"
+              }
+            },
+            {
+              "id": "540:1857",
+              "name": "speaker-image",
+              "type": "GROUP",
+              "x": 1563.06,
+              "y": 383.22,
+              "width": 334.78,
+              "height": 325.43,
+              "children": [
+                {
+                  "id": "540:1858",
+                  "name": "speaker-mask",
+                  "type": "VECTOR",
+                  "x": 1563.06,
+                  "y": 383.22,
+                  "width": 334.78,
+                  "height": 325.43,
+                  "fills": [
+                    {
+                      "type": "SOLID",
+                      "color": {
+                        "r": 1,
+                        "g": 0.615686297416687,
+                        "b": 0,
+                        "a": 1
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": "540:1859",
+                  "name": "{{speaker-image}}",
+                  "type": "RECTANGLE",
+                  "x": 1563.06,
+                  "y": 383.22,
+                  "width": 334.78,
+                  "height": 325.43,
+                  "fills": [
+                    {
+                      "type": "IMAGE",
+                      "imageRef": "0be6b0b8065ce41b1bf9a98750fb076bd9508982"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "540:1860",
+              "name": "{{name-1}}",
+              "type": "TEXT",
+              "x": 627.13,
+              "y": 404.82,
+              "width": 419.55,
+              "height": 257.17,
+              "fills": [
+                {
+                  "type": "SOLID",
+                  "color": {
+                    "r": 0,
+                    "g": 0,
+                    "b": 0,
+                    "a": 1
+                  }
+                }
+              ],
+              "characters": "Sylvain Perron\nCEO & Co-Founder \u0003of Botpress",
+              "style": {
+                "fontFamily": "Aspekta",
+                "fontSize": 113.47769165039062,
+                "fontWeight": 500,
+                "textAlign": "LEFT",
+                "fill": "#000000"
+              }
+            },
+            {
+              "id": "540:1861",
+              "name": "{{talkTitle-1}}",
+              "type": "TEXT",
+              "x": 1133.23,
+              "y": 404.82,
+              "width": 347.59,
+              "height": 263.22,
+              "fills": [
+                {
+                  "type": "SOLID",
+                  "color": {
+                    "r": 0,
+                    "g": 0,
+                    "b": 0,
+                    "a": 1
+                  }
+                }
+              ],
+              "characters": "llmz: The TypeScript AI Engine",
+              "style": {
+                "fontFamily": "Aspekta",
+                "fontSize": 36,
+                "fontWeight": 500,
+                "textAlign": "LEFT",
+                "fill": "#000000"
+              }
+            },
+            {
+              "id": "540:1862",
+              "name": " bullet",
+              "type": "VECTOR",
+              "x": 1563.06,
+              "y": 25.51,
+              "width": 334.78,
+              "height": 324.64,
+              "fills": [
+                {
+                  "type": "SOLID",
+                  "color": {
+                    "r": 0.2373422533273697,
+                    "g": 0.617020308971405,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ]
+            },
+            {
+              "id": "540:1873",
+              "name": "code-@-quebec-long",
+              "type": "FRAME",
+              "x": 62.7,
+              "y": 78.51,
+              "width": 1166,
+              "height": 228,
+              "fills": [
+                {
+                  "type": "SOLID",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ],
+              "children": [
+                {
+                  "id": "540:1874",
+                  "name": "text",
+                  "type": "GROUP",
+                  "x": 62.7,
+                  "y": 78.51,
+                  "width": 1166,
+                  "height": 228.01,
+                  "children": [
+                    {
+                      "id": "540:1875",
+                      "name": "Group",
+                      "type": "GROUP",
+                      "x": 62.7,
+                      "y": 78.51,
+                      "width": 1166,
+                      "height": 228.01,
+                      "children": [
+                        {
+                          "id": "540:1876",
+                          "name": "Vector",
+                          "type": "VECTOR",
+                          "x": 62.7,
+                          "y": 78.51,
+                          "width": 105.67,
+                          "height": 177.34,
+                          "fills": [
+                            {
+                              "type": "SOLID",
+                              "color": {
+                                "r": 0.03529411926865578,
+                                "g": 0.03529411926865578,
+                                "b": 0.03529411926865578,
+                                "a": 1
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          "id": "540:1877",
+                          "name": "Vector",
+                          "type": "VECTOR",
+                          "x": 170.14,
+                          "y": 129.17,
+                          "width": 88.05,
+                          "height": 126.68,
+                          "fills": [
+                            {
+                              "type": "SOLID",
+                              "color": {
+                                "r": 0.03529411926865578,
+                                "g": 0.03529411926865578,
+                                "b": 0.03529411926865578,
+                                "a": 1
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          "id": "540:1878",
+                          "name": "Vector",
+                          "type": "VECTOR",
+                          "x": 259.97,
+                          "y": 78.51,
+                          "width": 105.66,
+                          "height": 177.34,
+                          "fills": [
+                            {
+                              "type": "SOLID",
+                              "color": {
+                                "r": 0.03529411926865578,
+                                "g": 0.03529411926865578,
+                                "b": 0.03529411926865578,
+                                "a": 1
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          "id": "540:1879",
+                          "name": "Vector",
+                          "type": "VECTOR",
+                          "x": 367.41,
+                          "y": 129.17,
+                          "width": 79.26,
+                          "height": 126.67,
+                          "fills": [
+                            {
+                              "type": "SOLID",
+                              "color": {
+                                "r": 0.03529411926865578,
+                                "g": 0.03529411926865578,
+                                "b": 0.03529411926865578,
+                                "a": 1
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          "id": "540:1880",
+                          "name": "Vector",
+                          "type": "VECTOR",
+                          "x": 494.23,
+                          "y": 78.51,
+                          "width": 123.29,
+                          "height": 177.34,
+                          "fills": [
+                            {
+                              "type": "SOLID",
+                              "color": {
+                                "r": 0.03529411926865578,
+                                "g": 0.03529411926865578,
+                                "b": 0.03529411926865578,
+                                "a": 1
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          "id": "540:1881",
+                          "name": "Vector",
+                          "type": "VECTOR",
+                          "x": 647.46,
+                          "y": 78.51,
+                          "width": 123.29,
+                          "height": 228.01,
+                          "fills": [
+                            {
+                              "type": "SOLID",
+                              "color": {
+                                "r": 0.03529411926865578,
+                                "g": 0.03529411926865578,
+                                "b": 0.03529411926865578,
+                                "a": 1
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          "id": "540:1882",
+                          "name": "Vector",
+                          "type": "VECTOR",
+                          "x": 781.32,
+                          "y": 129.17,
+                          "width": 96.87,
+                          "height": 126.68,
+                          "fills": [
+                            {
+                              "type": "SOLID",
+                              "color": {
+                                "r": 0.03529411926865578,
+                                "g": 0.03529411926865578,
+                                "b": 0.03529411926865578,
+                                "a": 1
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          "id": "540:1883",
+                          "name": "Vector",
+                          "type": "VECTOR",
+                          "x": 888.77,
+                          "y": 129.17,
+                          "width": 79.26,
+                          "height": 126.67,
+                          "fills": [
+                            {
+                              "type": "SOLID",
+                              "color": {
+                                "r": 0.03529411926865578,
+                                "g": 0.03529411926865578,
+                                "b": 0.03529411926865578,
+                                "a": 1
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          "id": "540:1884",
+                          "name": "Vector",
+                          "type": "VECTOR",
+                          "x": 987.4,
+                          "y": 78.51,
+                          "width": 88.06,
+                          "height": 177.34,
+                          "fills": [
+                            {
+                              "type": "SOLID",
+                              "color": {
+                                "r": 0.03529411926865578,
+                                "g": 0.03529411926865578,
+                                "b": 0.03529411926865578,
+                                "a": 1
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          "id": "540:1885",
+                          "name": "Vector",
+                          "type": "VECTOR",
+                          "x": 1077.23,
+                          "y": 129.17,
+                          "width": 79.26,
+                          "height": 126.67,
+                          "fills": [
+                            {
+                              "type": "SOLID",
+                              "color": {
+                                "r": 0.03529411926865578,
+                                "g": 0.03529411926865578,
+                                "b": 0.03529411926865578,
+                                "a": 1
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          "id": "540:1886",
+                          "name": "Vector",
+                          "type": "VECTOR",
+                          "x": 1158.26,
+                          "y": 129.17,
+                          "width": 70.45,
+                          "height": 126.67,
+                          "fills": [
+                            {
+                              "type": "SOLID",
+                              "color": {
+                                "r": 0.03529411926865578,
+                                "g": 0.03529411926865578,
+                                "b": 0.03529411926865578,
+                                "a": 1
+                              }
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "images": {}
+}

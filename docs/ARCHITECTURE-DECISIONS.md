@@ -100,9 +100,7 @@ function buildSchema(config: TemplateConfig) {
 **Date**: 2025-12 (Ongoing)  
 **Status**: ✅ Implemented
 
-See `HYBRID-SYSTEM.md` for full details.
-
-**Key Decision**: Support both formats as first-class citizens, let developers choose per template.
+**Key Decision**: Support both formats as first-class citizens—node-based templates (e.g. blog image generator) and HTML templates with config-driven replacement (e.g. event posters). Template registry and render pipeline handle both; developers choose per family.
 
 ---
 
@@ -190,6 +188,5 @@ When making an architectural change:
 ## Related Documentation
 
 - `MIGRATION-ROADMAP.md` - Migration from HTML to node-based system
-- `HYBRID-SYSTEM.md` - Hybrid template system architecture
 - `TEMPLATE-BUILDING-STRATEGY.md` - Strategy for building templates
 - `README.md` - Project overview

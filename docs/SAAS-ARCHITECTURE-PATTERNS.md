@@ -1,5 +1,7 @@
 # SaaS Template Builder - Design Patterns & Architecture
 
+> **Note:** Long-term architecture vision; current work follows `MIGRATION-ROADMAP.md`.
+
 ## Vision
 Users create templates in Figma/Illustrator → Upload → Auto-generate config → Use in app
 
