@@ -59,8 +59,11 @@ export async function GET(
           mimeType: string;
           dataUri?: string;
         }>;
-        
-        const output = outputs.find((o) => o.url === `/storage/${path.join("/")}`);
+        const pathStr = path.join("/");
+        const output =
+          outputs.find((o) => o.url === `/storage/${pathStr}`) ??
+          outputs.find((o) => o.url?.endsWith(filename)) ??
+          outputs.find((o) => filename.startsWith(submissionId) && o.format === filename.split(".").pop());
         if (output?.dataUri) {
           // Extract base64 data from data URI
           const base64Data = output.dataUri.split(",")[1];

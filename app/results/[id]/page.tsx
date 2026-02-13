@@ -118,12 +118,15 @@ export default async function ResultsPage({
 
               <div className="space-y-2">
                 <h3 className="font-semibold">Download Formats</h3>
+                <p className="text-sm text-muted-foreground">
+                  {outputs.length} format{outputs.length !== 1 ? "s" : ""} available
+                </p>
                 <div className="flex flex-wrap gap-2">
                   {outputs.map((output) => (
                     <a
                       key={output.format}
                       href={output.url}
-                      download
+                      download={`poster.${output.format === "jpg" ? "jpeg" : output.format}`}
                     >
                       <Button variant="outline">
                         <Download className="mr-2 h-4 w-4" />

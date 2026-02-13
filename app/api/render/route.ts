@@ -41,16 +41,20 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    // Parse formats from JSON
+    // Parse formats from JSON (user can select multiple: png, jpg, webp, pdf)
+    const validFormats = ["png", "jpg", "webp", "pdf"];
     let formats: string[] = [];
     try {
-      formats = JSON.parse(submission.formats) as string[];
-      if (!Array.isArray(formats)) {
-        formats = ["png"]; // Default fallback
+      const parsed = JSON.parse(submission.formats) as string[];
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        formats = [...new Set(parsed.map((f) => String(f).toLowerCase()).filter((f) => validFormats.includes(f)))];
+      }
+      if (formats.length === 0) {
+        formats = ["png"];
       }
     } catch (error) {
       console.error("Error parsing formats, using default:", error);
-      formats = ["png"]; // Default fallback
+      formats = ["png"];
     }
     
     // Render HTML template
