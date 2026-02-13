@@ -9,6 +9,9 @@ import Navbar from "@/components/Navbar";
 export const metadata: Metadata = {
   title: "Botpress Poster Generator",
   description: "Internal poster generation tool",
+  icons: {
+    icon: "/favicon.ico",
+  },
 };
 
 export default function RootLayout({
@@ -17,11 +20,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body>
+    <html lang="en" className="h-full">
+      <body className="h-full min-h-screen overflow-x-hidden">
         <Providers>
-          <Navbar />
-          {children}
+          <div className="flex h-screen flex-col overflow-hidden">
+            <Navbar />
+            <main className="min-h-0 flex-1 overflow-auto">
+              {children}
+            </main>
+          </div>
         </Providers>
       </body>
     </html>

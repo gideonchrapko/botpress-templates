@@ -2,9 +2,9 @@
 
 import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
-import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { Home, LogOut } from "lucide-react";
+import { Home, LogOut, Layers } from "lucide-react";
+import { BOTPRESS_LOGO_DATA_URI } from "@/lib/botpress-logo";
 
 export default function Navbar() {
   const { data: session } = useSession();
@@ -17,13 +17,14 @@ export default function Navbar() {
     <nav className="border-b bg-background">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <Link href="/" className="flex items-center space-x-2">
-          <Image
-            src="/assets/botpress-logo-dark.svg"
+          {/* Inline data URI so logo always loads (no /assets/ request) */}
+          <img
+            src={BOTPRESS_LOGO_DATA_URI}
             alt="Botpress Logo"
             width={120}
             height={40}
             className="h-8 w-auto"
-            priority
+            fetchPriority="high"
           />
         </Link>
 
@@ -36,6 +37,14 @@ export default function Navbar() {
                   Home
                 </Button>
               </Link>
+              {session.user?.email === "gideon.chrapko@botpress.com" && (
+                <Link href="/dev/templates">
+                  <Button variant="ghost" size="sm">
+                    <Layers className="mr-2 h-4 w-4" />
+                    Templates
+                  </Button>
+                </Link>
+              )}
               <Button variant="ghost" size="sm" onClick={handleSignOut}>
                 <LogOut className="mr-2 h-4 w-4" />
                 Sign Out
