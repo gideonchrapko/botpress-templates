@@ -4,11 +4,9 @@
 export const MARKETING_TOOLS = [
   {
     slug: "url-creator",
-    name: "URL Creator",
+    name: "Tiphaine's URL Creator",
     description: "Create and manage tracking URLs for campaigns",
   },
-  // Add more tools here, e.g.:
-  // { slug: "utm-builder", name: "UTM Builder", description: "Build UTM parameters for links" },
 ] as const;
 
 export type MarketingToolSlug = (typeof MARKETING_TOOLS)[number]["slug"];
