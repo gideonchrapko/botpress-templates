@@ -14,28 +14,39 @@ export type MarketingTool = {
 };
 
 export async function getMarketingTools(): Promise<MarketingTool[]> {
-  const rows = await prisma.marketingTool.findMany({
-    orderBy: { slug: "asc" },
-  });
-  return rows.map((r: { slug: string; name: string; description: string; iframeUrl: string | null }) => ({
-    slug: r.slug,
-    name: r.name,
-    description: r.description,
-    iframeUrl: r.iframeUrl ?? undefined,
-  }));
+  try {
+    const rows = await prisma.marketingTool.findMany({
+      orderBy: { slug: "asc" },
+    });
+    return rows.map((r: { slug: string; name: string; description: string; iframeUrl: string | null }) => ({
+      slug: r.slug,
+      name: r.name,
+      description: r.description,
+      iframeUrl: r.iframeUrl ?? undefined,
+    }));
+  } catch (e) {
+    // Table may not exist yet if migration hasn't run (e.g. new Vercel deploy)
+    console.warn("Marketing tools: read failed", e);
+    return [];
+  }
 }
 
 export async function getMarketingToolBySlug(slug: string): Promise<MarketingTool | null> {
-  const row = await prisma.marketingTool.findUnique({
-    where: { slug },
-  });
-  if (!row) return null;
-  return {
-    slug: row.slug,
-    name: row.name,
-    description: row.description,
-    iframeUrl: row.iframeUrl ?? undefined,
-  };
+  try {
+    const row = await prisma.marketingTool.findUnique({
+      where: { slug },
+    });
+    if (!row) return null;
+    return {
+      slug: row.slug,
+      name: row.name,
+      description: row.description,
+      iframeUrl: row.iframeUrl ?? undefined,
+    };
+  } catch (e) {
+    console.warn("Marketing tools: get by slug failed", e);
+    return null;
+  }
 }
 
 /** Create one tool. Used by POST API. */
