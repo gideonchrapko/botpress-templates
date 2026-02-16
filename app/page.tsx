@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { FileText, Link2 } from "lucide-react";
 import { getAllTemplateConfigs } from "@/lib/template-registry";
 import { HomeTabs } from "@/components/HomeTabs";
-import { MARKETING_TOOLS } from "@/lib/marketing-tools";
+import { getMarketingTools } from "@/lib/marketing-tools";
 
 // Force dynamic rendering to avoid database queries during build
 export const dynamic = 'force-dynamic';
@@ -50,22 +50,28 @@ export default async function Home({
                     Streamline marketing tasks and workflows
                   </p>
                 </div>
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                  {MARKETING_TOOLS.map((tool) => (
-                    <Link key={tool.slug} href={`/tools/${tool.slug}`}>
-                      <Card className="flex h-full min-h-[180px] flex-col cursor-pointer hover:shadow-lg transition-shadow">
-                        <CardHeader className="p-4 pb-1">
-                          <Link2 className="h-5 w-5 mb-1.5 text-muted-foreground" />
-                          <CardTitle className="text-base">{tool.name}</CardTitle>
-                          <CardDescription className="line-clamp-2 text-xs">
-                            {tool.description}
-                          </CardDescription>
-                        </CardHeader>
-                        <CardContent className="p-4 pt-0 flex-1" />
-                      </Card>
-                    </Link>
-                  ))}
-                </div>
+                {getMarketingTools().length === 0 ? (
+                  <div className="text-center py-8 border rounded-lg">
+                    <p className="text-muted-foreground">There are currently no marketing tools available.</p>
+                  </div>
+                ) : (
+                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                    {getMarketingTools().map((tool) => (
+                      <Link key={tool.slug} href={`/tools/${tool.slug}`}>
+                        <Card className="flex h-full min-h-[180px] flex-col cursor-pointer hover:shadow-lg transition-shadow">
+                          <CardHeader className="p-4 pb-1">
+                            <Link2 className="h-5 w-5 mb-1.5 text-muted-foreground" />
+                            <CardTitle className="text-base">{tool.name}</CardTitle>
+                            <CardDescription className="line-clamp-2 text-xs">
+                              {tool.description}
+                            </CardDescription>
+                          </CardHeader>
+                          <CardContent className="p-4 pt-0 flex-1" />
+                        </Card>
+                      </Link>
+                    ))}
+                  </div>
+                )}
               </div>
               
               <div>
