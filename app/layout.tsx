@@ -20,7 +20,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="h-full">
+    <html lang="en" className="h-full dark">
       <body className="h-full min-h-screen overflow-x-hidden">
         <Providers>
           <div className="flex h-screen flex-col overflow-hidden">
