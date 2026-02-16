@@ -11,9 +11,58 @@
  */
 
 import { readFile, writeFile } from "fs/promises";
-import { join } from "path";
+import { join, basename } from "path";
 
 const rawPath = process.env.FIGMA_RAW_FILE ?? process.argv[2];
+
+const FIGMA_ACCESS_TOKEN = process.env.FIGMA_ACCESS_TOKEN;
+
+/** Collect node IDs that are vector/shape and can be exported as SVG */
+function collectSvgNodeIds(node: any, out: string[]): void {
+  if (node.type === "VECTOR" || node.type === "RECTANGLE" || node.type === "ELLIPSE") {
+    if (node.id) out.push(node.id);
+  }
+  if (node.children) {
+    for (const c of node.children) collectSvgNodeIds(c, out);
+  }
+}
+
+/** Extract Figma file key from raw filename e.g. figma-raw-TQ8HjO6jnzMjvKUnAQNhAN-808-249.json (file key has no hyphens) */
+function getFileKeyFromRawPath(filePath: string): string | null {
+  const name = basename(filePath, ".json");
+  if (!name.startsWith("figma-raw-")) return null;
+  const rest = name.slice("figma-raw-".length);
+  const firstDash = rest.indexOf("-");
+  if (firstDash <= 0) return null;
+  return rest.slice(0, firstDash);
+}
+
+/** Fetch SVGs from Figma Images API and return nodeId -> raw SVG string */
+async function fetchSvgsForNodes(fileKey: string, nodeIds: string[]): Promise<Record<string, string>> {
+  if (!FIGMA_ACCESS_TOKEN || nodeIds.length === 0) return {};
+  const idsParam = nodeIds.join(",");
+  const url = `https://api.figma.com/v1/images/${fileKey}?ids=${encodeURIComponent(idsParam)}&format=svg`;
+  const res = await fetch(url, { headers: { "X-Figma-Token": FIGMA_ACCESS_TOKEN } });
+  if (!res.ok) {
+    console.warn("Figma Images API error:", res.status, await res.text());
+    return {};
+  }
+  const data = (await res.json()) as { images?: Record<string, string>; err?: string };
+  if (data.err || !data.images) return {};
+  const svgs: Record<string, string> = {};
+  for (const [id, imageUrl] of Object.entries(data.images)) {
+    if (!imageUrl) continue;
+    try {
+      const svgRes = await fetch(imageUrl);
+      if (svgRes.ok) {
+        svgs[id] = await svgRes.text();
+      }
+    } catch (e) {
+      console.warn("Failed to fetch SVG for", id, e);
+    }
+  }
+  return svgs;
+}
 
 function figmaColorToHex(c: { r: number; g: number; b: number; a?: number }): string {
   const r = Math.round(c.r * 255);
@@ -126,12 +175,25 @@ async function main() {
 
   const mapped = mapNode(raw, minX, minY);
   const name = (raw.name ?? "template").replace(/[^a-zA-Z0-9-_ ]/g, "").trim() || "template";
+
+  // Export vector/shape nodes as SVG via Figma Images API (optional; needs FIGMA_ACCESS_TOKEN)
+  let svgs: Record<string, string> = {};
+  const svgNodeIds: string[] = [];
+  collectSvgNodeIds(raw, svgNodeIds);
+  const fileKey = getFileKeyFromRawPath(path);
+  if (FIGMA_ACCESS_TOKEN && fileKey && svgNodeIds.length > 0) {
+    console.log("Exporting", svgNodeIds.length, "shape(s) as SVG…");
+    svgs = await fetchSvgsForNodes(fileKey, svgNodeIds);
+    console.log("Got", Object.keys(svgs).length, "SVG(s)");
+  }
+
   const exportData = {
     name,
     width,
     height,
     nodes: [mapped],
     images: {},
+    ...(Object.keys(svgs).length > 0 && { svgs }),
   };
 
   const outName = `figma-import-${name.replace(/\s+/g, "-").toLowerCase()}.json`;

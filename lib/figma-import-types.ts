@@ -43,6 +43,7 @@ export interface FigmaExport {
   height: number;
   nodes: FigmaExportNode[];
   images?: Record<string, string>; // imageRef -> base64 data URI
+  svgs?: Record<string, string>; // node id -> raw SVG string (for VECTOR/RECTANGLE/ELLIPSE)
 }
 
 export interface FigmaImportResult {

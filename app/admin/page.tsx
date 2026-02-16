@@ -91,7 +91,7 @@ export default function AdminPage() {
       const text = await file.text();
       const body = JSON.parse(text);
       if (body.id && body.children && !body.nodes && body.name !== undefined && body.width === undefined) {
-        setImportStatus("Wrong file. Use figma-import-*.json (from bun run figma:to-import), not figma-raw-*.json");
+        setImportStatus("Wrong file. Use the converted import file. In terminal run: bun run figma:to-import examples/figma-raw-TQ8HjO6jnzMjvKUnAQNhAN-808-249.json (with FIGMA_ACCESS_TOKEN in .env for SVGs). Then upload the generated figma-import-*.json from the examples folder.");
         setImporting(false);
         return;
       }

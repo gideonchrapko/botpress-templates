@@ -131,3 +131,19 @@ model TemplateNode {
   @@index([nodeId])
 }
 
+// ============================================================================
+// Marketing Tools (Admin-managed, DB so it works on Vercel/serverless)
+// ============================================================================
+
+model MarketingTool {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  description String
+  iframeUrl   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([slug])
+}
+

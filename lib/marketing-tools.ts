@@ -1,10 +1,10 @@
 /**
  * Marketing tools shown under the Tools tab. Each has a slug used in the URL: /tools/[slug]
- * Data is stored in data/marketing-tools.json. Manage tools via Admin → Marketing Tools.
+ * Stored in DB so updates work on Vercel (serverless filesystem is read-only).
+ * Manage tools via Admin → Marketing Tools.
  */
 
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
-import { join } from "path";
+import { prisma } from "@/lib/prisma";
 
 export type MarketingTool = {
   slug: string;
@@ -13,34 +13,87 @@ export type MarketingTool = {
   iframeUrl?: string;
 };
 
-const DATA_PATH = join(process.cwd(), "data", "marketing-tools.json");
+export async function getMarketingTools(): Promise<MarketingTool[]> {
+  const rows = await prisma.marketingTool.findMany({
+    orderBy: { slug: "asc" },
+  });
+  return rows.map((r: { slug: string; name: string; description: string; iframeUrl: string | null }) => ({
+    slug: r.slug,
+    name: r.name,
+    description: r.description,
+    iframeUrl: r.iframeUrl ?? undefined,
+  }));
+}
 
-function readTools(): MarketingTool[] {
+export async function getMarketingToolBySlug(slug: string): Promise<MarketingTool | null> {
+  const row = await prisma.marketingTool.findUnique({
+    where: { slug },
+  });
+  if (!row) return null;
+  return {
+    slug: row.slug,
+    name: row.name,
+    description: row.description,
+    iframeUrl: row.iframeUrl ?? undefined,
+  };
+}
+
+/** Create one tool. Used by POST API. */
+export async function createMarketingTool(tool: MarketingTool): Promise<MarketingTool> {
+  const row = await prisma.marketingTool.create({
+    data: {
+      slug: tool.slug,
+      name: tool.name,
+      description: tool.description,
+      iframeUrl: tool.iframeUrl ?? null,
+    },
+  });
+  return {
+    slug: row.slug,
+    name: row.name,
+    description: row.description,
+    iframeUrl: row.iframeUrl ?? undefined,
+  };
+}
+
+/** Update one tool by current slug. Used by PATCH API. */
+export async function updateMarketingTool(
+  currentSlug: string,
+  updates: Partial<MarketingTool>
+): Promise<MarketingTool | null> {
+  const existing = await prisma.marketingTool.findUnique({ where: { slug: currentSlug } });
+  if (!existing) return null;
+
+  const newSlug =
+    updates.slug !== undefined
+      ? updates.slug.trim().toLowerCase().replace(/\s+/g, "-")
+      : existing.slug;
+
+  const row = await prisma.marketingTool.update({
+    where: { slug: currentSlug },
+    data: {
+      ...(updates.name !== undefined && { name: String(updates.name).trim() }),
+      ...(updates.description !== undefined && { description: String(updates.description).trim() }),
+      ...(updates.iframeUrl !== undefined && {
+        iframeUrl: String(updates.iframeUrl).trim() || null,
+      }),
+      ...(newSlug !== currentSlug && { slug: newSlug }),
+    },
+  });
+  return {
+    slug: row.slug,
+    name: row.name,
+    description: row.description,
+    iframeUrl: row.iframeUrl ?? undefined,
+  };
+}
+
+/** Delete one tool by slug. Used by DELETE API. */
+export async function deleteMarketingTool(slug: string): Promise<boolean> {
   try {
-    if (existsSync(DATA_PATH)) {
-      const raw = readFileSync(DATA_PATH, "utf-8");
-      const parsed = JSON.parse(raw) as MarketingTool[];
-      if (Array.isArray(parsed)) return parsed;
-    }
-  } catch (e) {
-    console.warn("Marketing tools: could not read data file", e);
+    await prisma.marketingTool.delete({ where: { slug } });
+    return true;
+  } catch {
+    return false;
   }
-  return [];
-}
-
-export function getMarketingTools(): MarketingTool[] {
-  return readTools();
-}
-
-export function getMarketingToolBySlug(slug: string): MarketingTool | null {
-  return getMarketingTools().find((t) => t.slug === slug) ?? null;
-}
-
-/** Write tools to data file (for API routes). */
-export function writeMarketingTools(tools: MarketingTool[]): void {
-  const dir = join(process.cwd(), "data");
-  if (!existsSync(dir)) {
-    mkdirSync(dir, { recursive: true });
-  }
-  writeFileSync(DATA_PATH, JSON.stringify(tools, null, 2), "utf-8");
 }

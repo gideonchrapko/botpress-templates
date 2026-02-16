@@ -59,8 +59,10 @@ async function main() {
     JSON.stringify(obj, null, 2).replace(/\u2028/g, "\\n").replace(/\u2029/g, "\\n");
 
   if (nodeId) {
+    // Figma API uses colon (794:4044); "Copy link" gives hyphen (794-4044) — accept both
+    const normalizedNodeId = nodeId.replace("-", ":");
     const root = data.document;
-    const frame = root ? findNodeById(root, nodeId) : null;
+    const frame = root ? findNodeById(root, normalizedNodeId) : null;
     if (!frame) {
       console.error("Node ID not found:", nodeId);
       console.error("Tip: Right-click the frame in Figma → Copy link to selection → use node-id= from URL");

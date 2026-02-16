@@ -8,7 +8,7 @@ export default async function MarketingToolPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const tool = getMarketingToolBySlug(slug);
+  const tool = await getMarketingToolBySlug(slug);
 
   if (!tool) {
     notFound();

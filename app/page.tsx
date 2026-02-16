@@ -23,7 +23,10 @@ export default async function Home({
 
   // If authenticated, show the full page with templates and drive resources
   if (session) {
-    const configs = await getAllTemplateConfigs();
+    const [configs, marketingTools] = await Promise.all([
+      getAllTemplateConfigs(),
+      getMarketingTools(),
+    ]);
 
     return (
       <div className="container mx-auto py-8">
@@ -50,13 +53,13 @@ export default async function Home({
                     Streamline marketing tasks and workflows
                   </p>
                 </div>
-                {getMarketingTools().length === 0 ? (
+                {marketingTools.length === 0 ? (
                   <div className="text-center py-8 border rounded-lg">
-                    <p className="text-muted-foreground">There are currently no marketing tools available.</p>
+                    <p className="text-muted-foreground">Add more</p>
                   </div>
                 ) : (
                   <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                    {getMarketingTools().map((tool) => (
+                    {marketingTools.map((tool) => (
                       <Link key={tool.slug} href={`/tools/${tool.slug}`}>
                         <Card className="flex h-full min-h-[180px] flex-col cursor-pointer hover:shadow-lg transition-shadow">
                           <CardHeader className="p-4 pb-1">

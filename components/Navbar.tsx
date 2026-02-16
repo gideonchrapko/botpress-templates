@@ -14,7 +14,7 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="border-b bg-background">
+    <nav className="sticky top-0 z-50 shrink-0 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <Link href="/" className="flex items-center space-x-2">
           {/* Inline data URI so logo always loads (no /assets/ request) */}

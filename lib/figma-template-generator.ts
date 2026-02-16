@@ -129,7 +129,7 @@ function findAllRenderableNodes(nodes: FigmaExportNode[]): Array<{ node: FigmaEx
  * Generate HTML template from Figma export
  */
 function generateHTMLTemplate(exportData: FigmaExport): string {
-  const { width, height, nodes, images } = exportData;
+  const { width, height, nodes, images, svgs } = exportData;
   
   // Extract all bindings for field generation
   const allBindings = extractAllBindings(nodes);
@@ -208,6 +208,12 @@ function generateHTMLTemplate(exportData: FigmaExport): string {
         const imageStyle = `position: absolute; left: ${node.x}px; top: ${node.y}px; width: ${node.width}px; height: ${node.height}px; object-fit: contain;`;
         html += `
     <img src="${images[imageRef]}" alt="${node.name || 'Image'}" style="${imageStyle}">`;
+      } else if (svgs?.[node.id]) {
+        // Static shape with exported SVG - embed so vector appears in rendered template
+        const svgDataUri = "data:image/svg+xml," + encodeURIComponent(svgs[node.id]);
+        const imageStyle = `position: absolute; left: ${node.x}px; top: ${node.y}px; width: ${node.width}px; height: ${node.height}px; object-fit: contain;`;
+        html += `
+    <img src="${svgDataUri}" alt="${node.name || 'Shape'}" style="${imageStyle}">`;
       } else {
         // Static shape (RECTANGLE, VECTOR, or ELLIPSE) - SOLID fill or fallback for stroke-only/no-fill
         const solidFill = node.fills?.find((f: any) => f.type === "SOLID" && f.color);

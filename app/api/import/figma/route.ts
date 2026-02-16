@@ -34,7 +34,8 @@ export const POST = auth(async (req) => {
       width: body.width,
       height: body.height,
       nodes: body.nodes,
-      images: body.images || {}
+      images: body.images || {},
+      svgs: body.svgs || {}
     };
 
     // Generate template files

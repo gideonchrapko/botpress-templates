@@ -5,11 +5,11 @@
 
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { getMarketingTools, writeMarketingTools, type MarketingTool } from "@/lib/marketing-tools";
+import { getMarketingTools, createMarketingTool, type MarketingTool } from "@/lib/marketing-tools";
 
 export async function GET() {
   try {
-    const tools = getMarketingTools();
+    const tools = await getMarketingTools();
     return NextResponse.json(tools);
   } catch (error) {
     console.error("List marketing tools error:", error);
@@ -54,7 +54,7 @@ export const POST = auth(async (req) => {
       );
     }
 
-    const tools = getMarketingTools();
+    const tools = await getMarketingTools();
     if (tools.some((t) => t.slug === slug)) {
       return NextResponse.json(
         { error: `A tool with slug "${slug}" already exists` },
@@ -62,13 +62,7 @@ export const POST = auth(async (req) => {
       );
     }
 
-    const newTool: MarketingTool = {
-      slug,
-      name,
-      description,
-      iframeUrl,
-    };
-    writeMarketingTools([...tools, newTool]);
+    const newTool = await createMarketingTool({ slug, name, description, iframeUrl });
     return NextResponse.json(newTool);
   } catch (error) {
     console.error("Add marketing tool error:", error);
