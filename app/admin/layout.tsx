@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth";
 
 const ALLOWED_EMAIL = "gideon.chrapko@botpress.com";
 
-export default async function DevTemplatesLayout({
+export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode;

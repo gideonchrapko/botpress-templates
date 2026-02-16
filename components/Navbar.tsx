@@ -38,10 +38,10 @@ export default function Navbar() {
                 </Button>
               </Link>
               {session.user?.email === "gideon.chrapko@botpress.com" && (
-                <Link href="/dev/templates">
+                <Link href="/admin">
                   <Button variant="ghost" size="sm">
                     <Layers className="mr-2 h-4 w-4" />
-                    Templates
+                    Admin
                   </Button>
                 </Link>
               )}
