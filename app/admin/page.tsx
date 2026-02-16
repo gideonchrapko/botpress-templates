@@ -148,7 +148,7 @@ export default function AdminPage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setAddToolError(data.error ?? "Failed to add tool");
+        setAddToolError(data.detail ? `${data.error}: ${data.detail}` : (data.error ?? "Failed to add tool"));
         return;
       }
       setToolForm({ name: "", slug: "", description: "", iframeUrl: "" });

@@ -66,8 +66,9 @@ export const POST = auth(async (req) => {
     return NextResponse.json(newTool);
   } catch (error) {
     console.error("Add marketing tool error:", error);
+    const message = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
-      { error: "Failed to add marketing tool" },
+      { error: "Failed to add marketing tool", detail: message },
       { status: 500 }
     );
   }
