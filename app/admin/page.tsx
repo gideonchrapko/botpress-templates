@@ -37,6 +37,32 @@ export default function AdminPage() {
   const [savingEdit, setSavingEdit] = useState(false);
   const [editError, setEditError] = useState("");
 
+  const [activeTab, setActiveTab] = useState<"templates" | "marketing">("templates");
+
+  useEffect(() => {
+    const hash = typeof window !== "undefined" ? window.location.hash.slice(1) : "";
+    if (hash === "templates" || hash === "marketing") {
+      setActiveTab(hash);
+    }
+  }, []);
+
+  useEffect(() => {
+    const onHashChange = () => {
+      const hash = window.location.hash.slice(1);
+      if (hash === "templates" || hash === "marketing") setActiveTab(hash);
+    };
+    window.addEventListener("hashchange", onHashChange);
+    return () => window.removeEventListener("hashchange", onHashChange);
+  }, []);
+
+  const handleTabChange = (value: string) => {
+    const tab = value === "marketing" ? "marketing" : "templates";
+    setActiveTab(tab);
+    if (typeof window !== "undefined") {
+      window.history.replaceState(null, "", `${window.location.pathname}#${tab}`);
+    }
+  };
+
   async function fetchTemplates() {
     setLoadingList(true);
     try {
@@ -249,7 +275,7 @@ export default function AdminPage() {
         </p>
       </header>
 
-      <Tabs defaultValue="templates" className="space-y-6">
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
         <TabsList className="grid w-full max-w-md grid-cols-2">
           <TabsTrigger value="templates" className="gap-2">
             <FileText className="h-4 w-4" />
