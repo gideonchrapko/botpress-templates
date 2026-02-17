@@ -5,8 +5,8 @@ CREATE TABLE "MarketingTool" (
     "name" TEXT NOT NULL,
     "description" TEXT NOT NULL,
     "iframeUrl" TEXT,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "MarketingTool_pkey" PRIMARY KEY ("id")
 );

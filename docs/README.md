@@ -17,6 +17,7 @@ Internal web app for template-based image generation: event posters, blog images
 ### Prerequisites
 
 - Bun runtime (latest version)
+- PostgreSQL (local or Docker)
 - Google OAuth credentials
 
 ### Installation
@@ -26,10 +27,23 @@ Internal web app for template-based image generation: event posters, blog images
 bun install
 ```
 
-2. Set up environment variables:
+2. Start PostgreSQL (if not already running).
+
+   **Option A – Docker** (Postgres on your machine; Docker Desktop must be running):
+   ```bash
+   docker run -d -e POSTGRES_PASSWORD=postgres -p 5432:5432 --name postgres-dev postgres
+   ```
+   Then use `DATABASE_URL="postgresql://postgres:postgres@localhost:5432/postgres"` in `.env`.
+
+   **Option B – Hosted Postgres** (no Docker; good if you don’t want Docker Desktop running):
+   - Create a free Postgres project at [Neon](https://neon.tech) or [Supabase](https://supabase.com).
+   - Copy the connection string and set it in `.env` as `DATABASE_URL` (e.g. `postgresql://user:password@host/dbname?sslmode=require`).
+   - Skip Docker entirely.
+
+3. Set up environment variables:
 Create a `.env` file in the root directory:
 ```env
-DATABASE_URL="file:./dev.db"
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/postgres"
 NEXTAUTH_URL="http://localhost:3000"
 NEXTAUTH_SECRET="your-secret-key-here"
 GOOGLE_CLIENT_ID="your-google-client-id"
@@ -41,17 +55,17 @@ Generate a secret key:
 openssl rand -base64 32
 ```
 
-3. Set up the database:
+4. Run migrations (creates tables):
 ```bash
-bun run db:push
+bun run db:migrate
 ```
 
-4. Install Playwright browsers:
+5. Install Playwright browsers:
 ```bash
 bunx playwright install chromium
 ```
 
-5. Run the development server:
+6. Run the development server:
 ```bash
 bun run dev
 ```
