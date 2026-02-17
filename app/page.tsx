@@ -46,7 +46,7 @@ export default async function Home({
         <HomeTabs
           toolsTab={
             <section className="space-y-12">
-                            <div>
+              <div>
                 <div className="mb-6">
                   <h2 className="text-2xl font-bold">Marketing Tools</h2>
                   <p className="text-muted-foreground mt-1">
@@ -138,7 +138,7 @@ export default async function Home({
                 <div className="mb-6">
                   <h2 className="text-2xl font-bold">Design Resources</h2>
                   <p className="text-muted-foreground mt-1">
-                    Access folders from Google Drive
+                    Access design resources from Google Drive
                   </p>
                 </div>
                 <DriveGallery folderId={DRIVE_FOLDER_IDS.designResources} />
