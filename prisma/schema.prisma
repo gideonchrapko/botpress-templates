@@ -140,6 +140,7 @@ model MarketingTool {
   slug        String   @unique
   name        String
   description String
+  author      String?
   iframeUrl   String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

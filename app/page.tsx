@@ -65,6 +65,9 @@ export default async function Home({
                           <CardHeader className="p-4 pb-1">
                             <Link2 className="h-5 w-5 mb-1.5 text-muted-foreground" />
                             <CardTitle className="text-base">{tool.name}</CardTitle>
+                            {tool.author && (
+                              <p className="text-xs text-muted-foreground">by {tool.author}</p>
+                            )}
                             <CardDescription className="line-clamp-2 text-xs">
                               {tool.description}
                             </CardDescription>

@@ -11,7 +11,7 @@ import { FileDown, FileText, Link2, Pencil, Trash2 } from "lucide-react";
 
 type TemplateRow = { family: string; name: string; format: string };
 
-type MarketingToolRow = { slug: string; name: string; description: string; iframeUrl?: string };
+type MarketingToolRow = { slug: string; name: string; description: string; author?: string; iframeUrl?: string };
 
 export default function AdminPage() {
   const [templates, setTemplates] = useState<TemplateRow[]>([]);
@@ -23,15 +23,16 @@ export default function AdminPage() {
 
   const [marketingTools, setMarketingTools] = useState<MarketingToolRow[]>([]);
   const [loadingTools, setLoadingTools] = useState(true);
-  const [toolForm, setToolForm] = useState({ name: "", slug: "", description: "", iframeUrl: "" });
+  const [toolForm, setToolForm] = useState({ name: "", slug: "", description: "", author: "", iframeUrl: "" });
   const [addingTool, setAddingTool] = useState(false);
   const [addToolError, setAddToolError] = useState("");
   const [deletingTool, setDeletingTool] = useState<string | null>(null);
   const [editingSlug, setEditingSlug] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState<{ slug: string; name: string; description: string; iframeUrl: string }>({
+  const [editForm, setEditForm] = useState<{ slug: string; name: string; description: string; author: string; iframeUrl: string }>({
     slug: "",
     name: "",
     description: "",
+    author: "",
     iframeUrl: "",
   });
   const [savingEdit, setSavingEdit] = useState(false);
@@ -148,6 +149,7 @@ export default function AdminPage() {
     const name = toolForm.name.trim();
     const slug = toolForm.slug.trim() || name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
     const description = toolForm.description.trim();
+    const author = toolForm.author.trim() || undefined;
     const iframeUrl = toolForm.iframeUrl.trim();
     if (!name) {
       setAddToolError("Name is required.");
@@ -170,14 +172,14 @@ export default function AdminPage() {
       const res = await fetch("/api/marketing-tools", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, slug, description, iframeUrl }),
+        body: JSON.stringify({ name, slug, description, author, iframeUrl }),
       });
       const data = await res.json();
       if (!res.ok) {
         setAddToolError(data.detail ? `${data.error}: ${data.detail}` : (data.error ?? "Failed to add tool"));
         return;
       }
-      setToolForm({ name: "", slug: "", description: "", iframeUrl: "" });
+      setToolForm({ name: "", slug: "", description: "", author: "", iframeUrl: "" });
       setMarketingTools((prev) => [...prev, data]);
     } catch (e) {
       setAddToolError("Request failed");
@@ -192,6 +194,7 @@ export default function AdminPage() {
       slug: tool.slug,
       name: tool.name,
       description: tool.description,
+      author: tool.author ?? "",
       iframeUrl: tool.iframeUrl ?? "",
     });
     setEditError("");
@@ -204,6 +207,7 @@ export default function AdminPage() {
     const name = editForm.name.trim();
     const slug = editForm.slug.trim().toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
     const description = editForm.description.trim();
+    const author = editForm.author.trim() || undefined;
     const iframeUrl = editForm.iframeUrl.trim();
     if (!name || !slug || !description || !iframeUrl) {
       setEditError("All fields are required.");
@@ -214,7 +218,7 @@ export default function AdminPage() {
       const res = await fetch(`/api/marketing-tools/${encodeURIComponent(editingSlug)}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, slug, description, iframeUrl }),
+        body: JSON.stringify({ name, slug, description, author, iframeUrl }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -426,6 +430,15 @@ export default function AdminPage() {
                   />
                 </div>
                 <div className="space-y-2">
+                  <Label htmlFor="tool-author">Author (optional)</Label>
+                  <Input
+                    id="tool-author"
+                    placeholder="e.g. Tiphaine"
+                    value={toolForm.author}
+                    onChange={(e) => setToolForm((f) => ({ ...f, author: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
                   <Label htmlFor="tool-iframe">Iframe URL (required)</Label>
                   <Input
                     id="tool-iframe"
@@ -505,6 +518,14 @@ export default function AdminPage() {
                             />
                           </div>
                           <div className="space-y-2">
+                            <Label>Author (optional)</Label>
+                            <Input
+                              value={editForm.author}
+                              onChange={(e) => setEditForm((f) => ({ ...f, author: e.target.value }))}
+                              placeholder="e.g. Tiphaine"
+                            />
+                          </div>
+                          <div className="space-y-2">
                             <Label>Iframe URL (required)</Label>
                             <Input
                               type="url"
@@ -539,6 +560,9 @@ export default function AdminPage() {
                             <span className="text-xs text-muted-foreground ml-2">/tools/{t.slug}</span>
                             {t.description && (
                               <p className="text-sm text-muted-foreground mt-1">{t.description}</p>
+                            )}
+                            {t.author && (
+                              <p className="text-xs text-muted-foreground mt-0.5">by {t.author}</p>
                             )}
                             {t.iframeUrl && (
                               <p className="text-xs text-muted-foreground mt-0.5 break-all">iframe: {t.iframeUrl}</p>

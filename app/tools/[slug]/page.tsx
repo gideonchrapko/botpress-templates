@@ -25,6 +25,9 @@ export default async function MarketingToolPage({
       />
       <div className="mb-8">
         <h1 className="text-3xl font-bold">{tool.name}</h1>
+        {tool.author && (
+          <p className="text-muted-foreground mt-1 text-sm">by {tool.author}</p>
+        )}
         {tool.description && (
           <p className="text-muted-foreground mt-2">{tool.description}</p>
         )}

@@ -10,6 +10,7 @@ export type MarketingTool = {
   slug: string;
   name: string;
   description: string;
+  author?: string;
   iframeUrl?: string;
 };
 
@@ -18,10 +19,11 @@ export async function getMarketingTools(): Promise<MarketingTool[]> {
     const rows = await prisma.marketingTool.findMany({
       orderBy: { slug: "asc" },
     });
-    return rows.map((r: { slug: string; name: string; description: string; iframeUrl: string | null }) => ({
+    return rows.map((r: { slug: string; name: string; description: string; author: string | null; iframeUrl: string | null }) => ({
       slug: r.slug,
       name: r.name,
       description: r.description,
+      author: r.author ?? undefined,
       iframeUrl: r.iframeUrl ?? undefined,
     }));
   } catch (e) {
@@ -41,6 +43,7 @@ export async function getMarketingToolBySlug(slug: string): Promise<MarketingToo
       slug: row.slug,
       name: row.name,
       description: row.description,
+      author: row.author ?? undefined,
       iframeUrl: row.iframeUrl ?? undefined,
     };
   } catch (e) {
@@ -56,6 +59,7 @@ export async function createMarketingTool(tool: MarketingTool): Promise<Marketin
       slug: tool.slug,
       name: tool.name,
       description: tool.description,
+      author: tool.author ?? null,
       iframeUrl: tool.iframeUrl ?? null,
     },
   });
@@ -63,6 +67,7 @@ export async function createMarketingTool(tool: MarketingTool): Promise<Marketin
     slug: row.slug,
     name: row.name,
     description: row.description,
+    author: row.author ?? undefined,
     iframeUrl: row.iframeUrl ?? undefined,
   };
 }
@@ -85,6 +90,9 @@ export async function updateMarketingTool(
     data: {
       ...(updates.name !== undefined && { name: String(updates.name).trim() }),
       ...(updates.description !== undefined && { description: String(updates.description).trim() }),
+      ...(updates.author !== undefined && {
+        author: String(updates.author).trim() || null,
+      }),
       ...(updates.iframeUrl !== undefined && {
         iframeUrl: String(updates.iframeUrl).trim() || null,
       }),
@@ -95,6 +103,7 @@ export async function updateMarketingTool(
     slug: row.slug,
     name: row.name,
     description: row.description,
+    author: row.author ?? undefined,
     iframeUrl: row.iframeUrl ?? undefined,
   };
 }

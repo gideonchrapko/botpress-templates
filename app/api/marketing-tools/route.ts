@@ -33,6 +33,7 @@ export const POST = auth(async (req) => {
     const slug = (body.slug ?? "").trim().toLowerCase().replace(/\s+/g, "-");
     const name = (body.name ?? "").trim();
     const description = (body.description ?? "").trim();
+    const author = (body.author ?? "").trim() || undefined;
     const iframeUrl = (body.iframeUrl ?? "").trim();
 
     if (!slug || !name) {
@@ -62,7 +63,7 @@ export const POST = auth(async (req) => {
       );
     }
 
-    const newTool = await createMarketingTool({ slug, name, description, iframeUrl });
+    const newTool = await createMarketingTool({ slug, name, description, author, iframeUrl });
     return NextResponse.json(newTool);
   } catch (error) {
     console.error("Add marketing tool error:", error);
