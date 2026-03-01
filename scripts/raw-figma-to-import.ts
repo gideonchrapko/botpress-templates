@@ -27,6 +27,25 @@ function collectSvgNodeIds(node: any, out: string[]): void {
   }
 }
 
+/** Detect masked image group: GROUP with 2 children — one shape (VECTOR/RECTANGLE/ELLIPSE), one RECTANGLE with IMAGE fill */
+function isMaskedImageGroup(node: any): boolean {
+  if (node.type !== "GROUP" || !node.children || node.children.length !== 2) return false;
+  const [a, b] = node.children;
+  const hasImageFill = (n: any) => n.fills?.some((f: any) => f.type === "IMAGE" && f.imageRef);
+  const isShape = (n: any) => n.type === "VECTOR" || n.type === "RECTANGLE" || n.type === "ELLIPSE";
+  return (hasImageFill(a) && isShape(b)) || (hasImageFill(b) && isShape(a));
+}
+
+/** Collect GROUP node IDs for masked image groups so we can request their SVG (contains the real mask path) */
+function collectMaskedGroupIds(node: any, out: string[]): void {
+  if (node.type === "GROUP" && node.id && isMaskedImageGroup(node)) {
+    out.push(node.id);
+  }
+  if (node.children) {
+    for (const c of node.children) collectMaskedGroupIds(c, out);
+  }
+}
+
 /** Extract Figma file key from raw filename e.g. figma-raw-TQ8HjO6jnzMjvKUnAQNhAN-808-249.json (file key has no hyphens) */
 function getFileKeyFromRawPath(filePath: string): string | null {
   const name = basename(filePath, ".json");
@@ -180,9 +199,11 @@ async function main() {
   let svgs: Record<string, string> = {};
   const svgNodeIds: string[] = [];
   collectSvgNodeIds(raw, svgNodeIds);
+  // Also request SVG for masked image GROUPs — Figma returns the group SVG which includes the mask path (mask layer SVG often missing)
+  collectMaskedGroupIds(mapped, svgNodeIds);
   const fileKey = getFileKeyFromRawPath(path);
   if (FIGMA_ACCESS_TOKEN && fileKey && svgNodeIds.length > 0) {
-    console.log("Exporting", svgNodeIds.length, "shape(s) as SVG…");
+    console.log("Exporting", svgNodeIds.length, "node(s) as SVG…");
     svgs = await fetchSvgsForNodes(fileKey, svgNodeIds);
     console.log("Got", Object.keys(svgs).length, "SVG(s)");
   }

@@ -19,6 +19,41 @@ function extractBinding(name: string): string | null {
 }
 
 /**
+ * Extract the first path's "d" attribute from an SVG string (e.g. from Figma export).
+ * Used to build a mask from a vector shape.
+ */
+function extractPathDFromSvg(svgString: string): string | null {
+  if (!svgString || typeof svgString !== "string") return null;
+  // Path: allow d= with optional whitespace/newlines
+  const pathMatch = svgString.match(/<path[^>]*\sd=["']([^"']*)["']/);
+  if (pathMatch) return pathMatch[1].trim();
+  const rectMatch = svgString.match(/<rect[^>]*\s+width=["']([^"']*)["'][^>]*height=["']([^"']*)["']/);
+  if (rectMatch) {
+    const w = parseFloat(rectMatch[1]) || 100;
+    const h = parseFloat(rectMatch[2]) || 100;
+    return `M0 0h${w}v${h}H0V0z`;
+  }
+  const ellipseMatch = svgString.match(/<ellipse[^>]*\s+cx=["']([^"']*)["'][^>]*cy=["']([^"']*)["'][^>]*rx=["']([^"']*)["'][^>]*ry=["']([^"']*)["']/);
+  if (ellipseMatch) {
+    const cx = parseFloat(ellipseMatch[1]) || 0;
+    const cy = parseFloat(ellipseMatch[2]) || 0;
+    const rx = parseFloat(ellipseMatch[3]) || 50;
+    const ry = parseFloat(ellipseMatch[4]) || 50;
+    return `M${cx - rx},${cy}a${rx},${ry} 0 1,1 ${2 * rx},0a${rx},${ry} 0 1,1 -${2 * rx},0`;
+  }
+  return null;
+}
+
+/** Ellipse path that fills the given width and height (for fallback when mask SVG is not in export). */
+function ellipsePathD(width: number, height: number): string {
+  const cx = width / 2;
+  const cy = height / 2;
+  const rx = width / 2;
+  const ry = height / 2;
+  return `M${cx - rx},${cy} a${rx},${ry} 0 1,1 ${width},0 a${rx},${ry} 0 1,1 -${width},0`;
+}
+
+/**
  * Convert Figma color to hex
  */
 function figmaColorToHex(color: { r: number; g: number; b: number; a?: number }): string {
@@ -54,12 +89,38 @@ function findNodesByBinding(nodes: FigmaExportNode[], bindingName: string): Figm
 }
 
 /**
+ * Check if a GROUP is a "masked image" group: one child is the mask shape (VECTOR/RECTANGLE/ELLIPSE)
+ * and one child is the image (RECTANGLE with IMAGE fill). Returns { maskNode, imageNode, binding } or null.
+ */
+function asMaskedImageGroup(group: FigmaExportNode): { maskNode: FigmaExportNode; imageNode: FigmaExportNode; binding: string | null } | null {
+  if (group.type !== "GROUP" || !group.children || group.children.length !== 2) return null;
+  const [a, b] = group.children;
+  const hasImageFill = (n: FigmaExportNode) => n.fills?.some((f: any) => f.type === "IMAGE" && f.imageRef);
+  const isShape = (n: FigmaExportNode) => n.type === "VECTOR" || n.type === "RECTANGLE" || n.type === "ELLIPSE";
+  let maskNode: FigmaExportNode | null = null;
+  let imageNode: FigmaExportNode | null = null;
+  if (hasImageFill(a) && isShape(b)) {
+    imageNode = a;
+    maskNode = b;
+  } else if (hasImageFill(b) && isShape(a)) {
+    imageNode = b;
+    maskNode = a;
+  }
+  if (!maskNode || !imageNode) return null;
+  const binding = extractBinding(imageNode.name);
+  return { maskNode, imageNode, binding };
+}
+
+/**
  * Find all nodes that should be rendered (bindings + static images/SVGs)
  */
-function findAllRenderableNodes(nodes: FigmaExportNode[]): Array<{ node: FigmaExportNode; binding?: string; isStatic: boolean; parentFrame?: FigmaExportNode }> {
-  const renderable: Array<{ node: FigmaExportNode; binding?: string; isStatic: boolean; parentFrame?: FigmaExportNode }> = [];
-  
+function findAllRenderableNodes(nodes: FigmaExportNode[]): Array<{ node: FigmaExportNode; binding?: string; isStatic: boolean; parentFrame?: FigmaExportNode; maskedImage?: { maskNode: FigmaExportNode; imageNode: FigmaExportNode } }> {
+  const renderable: Array<{ node: FigmaExportNode; binding?: string; isStatic: boolean; parentFrame?: FigmaExportNode; maskedImage?: { maskNode: FigmaExportNode; imageNode: FigmaExportNode } }> = [];
+  const skipNodeIds = new Set<string>();
+
   function traverse(node: FigmaExportNode, parentFrame?: FigmaExportNode, immediateParent?: FigmaExportNode) {
+    if (skipNodeIds.has(node.id)) return;
+
     const binding = extractBinding(node.name);
     
     // Handle FRAME nodes with bindings (auto-expanding text frames)
@@ -71,8 +132,20 @@ function findAllRenderableNodes(nodes: FigmaExportNode[]): Array<{ node: FigmaEx
       return;
     }
     
-    // Skip GROUP nodes (containers only, no bindings)
+    // GROUP: check for masked image group (mask shape + image). If so, emit one renderable and skip children.
     if (node.type === "GROUP") {
+      const masked = asMaskedImageGroup(node);
+      if (masked) {
+        skipNodeIds.add(masked.maskNode.id);
+        skipNodeIds.add(masked.imageNode.id);
+        renderable.push({
+          node,
+          binding: masked.binding ?? undefined,
+          isStatic: !masked.binding,
+          maskedImage: { maskNode: masked.maskNode, imageNode: masked.imageNode },
+        });
+        return;
+      }
       if (node.children) {
         node.children.forEach(child => traverse(child, parentFrame, node));
       }
@@ -200,7 +273,40 @@ function generateHTMLTemplate(exportData: FigmaExport): string {
   // Generate HTML for each renderable node
   // Track which FRAMEs we've already rendered to avoid duplicates
   const renderedFrames = new Set<string>();
-  for (const { node, binding, isStatic, parentFrame } of renderableNodes) {
+  for (const entry of renderableNodes) {
+    const { node, binding, isStatic, parentFrame, maskedImage } = entry;
+
+    // Masked image group: one SVG with mask + image so the image appears clipped by the mask
+    if (maskedImage) {
+      const { maskNode, imageNode } = maskedImage;
+      // Prefer mask node SVG, then GROUP SVG (export script requests group SVG; Figma returns it with the mask path), then ellipse fallback
+      const maskPath =
+        (svgs?.[maskNode.id] && extractPathDFromSvg(svgs[maskNode.id])) ||
+        (svgs?.[node.id] && extractPathDFromSvg(svgs[node.id])) ||
+        ellipsePathD(node.width || 100, node.height || 100);
+      const imageRef = imageNode.fills?.find((f: any) => f.type === "IMAGE" && f.imageRef)?.imageRef;
+      let imageHref = binding ? `{{${binding}}}` : (imageRef && images?.[imageRef] ? images[imageRef] : "");
+      const maskId = `mask-${node.id.replace(/[^a-zA-Z0-9]/g, "-")}`;
+      const w = node.width || 100;
+      const h = node.height || 100;
+      const viewBox = `0 0 ${w} ${h}`;
+      const style = `position: absolute; left: ${node.x}px; top: ${node.y}px; width: ${w}px; height: ${h}px; overflow: hidden;`;
+      const safePathD = maskPath.replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+      html += `
+    <div style="${style}">
+      <svg width="100%" height="100%" viewBox="${viewBox}" preserveAspectRatio="xMidYMid meet" style="display: block;">
+        <defs>
+          <mask id="${maskId}">
+            <rect width="100%" height="100%" fill="black"/>
+            <path d="${safePathD}" fill="white"/>
+          </mask>
+        </defs>
+        <image href="${imageHref}" width="100%" height="100%" preserveAspectRatio="xMidYMid slice" mask="url(#${maskId})"/>
+      </svg>
+    </div>`;
+      continue;
+    }
+
     if (isStatic) {
       // Static image (no binding - hardcoded in template)
       const imageRef = node.fills?.find(f => f.type === "IMAGE" && f.imageRef)?.imageRef;
