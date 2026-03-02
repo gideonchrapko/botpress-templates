@@ -1,0 +1,38 @@
+{
+  "id": "blog-image-generator",
+  "name": "Blog Image Generator",
+  "format": "node",
+  "width": 1500,
+  "height": 1000,
+  "variants": ["1"],
+  "fields": [
+    {
+      "type": "text",
+      "name": "blogTitle",
+      "label": "Blog Title",
+      "placeholder": "e.g., How AI is Transforming Email Campaigns",
+      "maxLength": 200,
+      "replacements": [
+        { "pattern": "{{blogTitle}}", "type": "text" }
+      ]
+    },
+    {
+      "type": "text",
+      "name": "keywords",
+      "label": "Keywords (Optional)",
+      "placeholder": "e.g., ai, email, automation, marketing",
+      "maxLength": 500,
+      "optional": true,
+      "replacements": [
+        { "pattern": "{{keywords}}", "type": "text" }
+      ]
+    }
+  ],
+  "assets": {
+    "logo": {
+      "default": "",
+      "swap": {}
+    }
+  },
+  "colorReplacements": {}
+}

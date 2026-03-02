@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Monthly Poster</title>
+    <link rel="stylesheet" href="fonts/font-face.css">
+</head>
+<body style="margin: 0; padding: 0;">
+    <div style="width: 1080px; height: 1080px; margin: 0; padding: 0; box-sizing: border-box; overflow: hidden; background-color: #3D9DFF; display: flex; flex-direction: column; justify-content: space-between; align-items: center;">
+        <!-- Top Section: Logo -->
+        <div style="width: 100%; padding: 80px 80px 40px 80px; box-sizing: border-box; display: flex; justify-content: center; align-items: flex-start;">
+            <img src="assets/mtl-code-wide.svg" alt="Event Logo" style="max-width: 920px; height: auto; display: block;">
+        </div>
+        
+        <!-- Middle Section: Month -->
+        <div style="width: 100%; padding: 0 80px; box-sizing: border-box; display: flex; justify-content: center; align-items: center; flex: 1;">
+            <div style="font-family: 'Aspekta', sans-serif; font-weight: 700; font-size: 120px; color: #FFFFFF; text-align: center; line-height: 1.1;">
+                {{eventDate}}
+            </div>
+        </div>
+        
+        <!-- Bottom Section: Optional Talk Title -->
+        <div style="width: 100%; padding: 40px 80px 80px 80px; box-sizing: border-box; display: flex; justify-content: center; align-items: flex-end; min-height: 150px;">
+            <div style="font-family: 'Aspekta', sans-serif; font-weight: 500; font-size: 48px; color: #FFFFFF; text-align: center; line-height: 1.2; max-width: 920px;">
+                {{talkTitle}}
+            </div>
+        </div>
+    </div>
+</body>
+</html>
