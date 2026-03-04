@@ -111,11 +111,83 @@ function asMaskedImageGroup(group: FigmaExportNode): { maskNode: FigmaExportNode
   return { maskNode, imageNode, binding };
 }
 
+/** Escape HTML so static text is safe to insert. */
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+/**
+ * Resolve Figma line height to CSS value for 1:1 match.
+ * Prefers lineHeightPx; else PERCENT (fontSize * value/100); else AUTO/normal.
+ */
+function getLineHeightCss(
+  style: FigmaExportNode["style"],
+  fontSize: number,
+  fallbackHeight?: number
+): string {
+  if (!style) return "normal";
+  if (style.lineHeightPx != null && style.lineHeightPx > 0) return `${style.lineHeightPx}px`;
+  if (style.lineHeightUnit === "PERCENT" && style.lineHeightValue != null && style.lineHeightValue > 0) {
+    const px = Math.round((fontSize * style.lineHeightValue) / 100);
+    return `${px}px`;
+  }
+  if (style.lineHeightUnit === "PIXELS" && style.lineHeightValue != null && style.lineHeightValue > 0) {
+    return `${style.lineHeightValue}px`;
+  }
+  if (fallbackHeight != null && fallbackHeight > 0 && fontSize > 0) {
+    return `${Math.min(fallbackHeight, Math.round(fontSize * 1.2))}px`;
+  }
+  return "normal";
+}
+
+/**
+ * Collect TEXT nodes that are direct children of the frame, or the only TEXT inside a direct GROUP child.
+ * This supports both FRAME > [TEXT, TEXT] and FRAME > [GROUP, GROUP] where each GROUP has one TEXT.
+ */
+function collectTextLinesFromFrame(frame: FigmaExportNode): Array<{ node: FigmaExportNode; binding?: string }> {
+  const lines: Array<{ node: FigmaExportNode; binding?: string }> = [];
+  if (!frame.children) return lines;
+  for (const child of frame.children) {
+    if (child.type === "TEXT") {
+      lines.push({ node: child, binding: extractBinding(child.name) || undefined });
+    } else if (child.type === "GROUP" && child.children?.length === 1 && child.children[0].type === "TEXT") {
+      const textNode = child.children[0];
+      lines.push({ node: textNode, binding: extractBinding(textNode.name) || undefined });
+    }
+  }
+  return lines;
+}
+
+/**
+ * Check if a FRAME is a "multi-line text block": 2+ TEXT lines (direct TEXT children or one TEXT per GROUP child).
+ * Lines can have a binding ({{name}}) or be static (use node.characters).
+ */
+function asMultiLineTextBlock(frame: FigmaExportNode): { frame: FigmaExportNode; lines: Array<{ node: FigmaExportNode; binding?: string }> } | null {
+  if (frame.type !== "FRAME") return null;
+  const lines = collectTextLinesFromFrame(frame);
+  if (lines.length < 2) return null;
+  return { frame, lines };
+}
+
+type RenderableEntry = {
+  node: FigmaExportNode;
+  binding?: string;
+  isStatic: boolean;
+  parentFrame?: FigmaExportNode;
+  maskedImage?: { maskNode: FigmaExportNode; imageNode: FigmaExportNode };
+  textBlock?: { frame: FigmaExportNode; lines: Array<{ node: FigmaExportNode; binding?: string }> };
+};
+
 /**
  * Find all nodes that should be rendered (bindings + static images/SVGs)
  */
-function findAllRenderableNodes(nodes: FigmaExportNode[]): Array<{ node: FigmaExportNode; binding?: string; isStatic: boolean; parentFrame?: FigmaExportNode; maskedImage?: { maskNode: FigmaExportNode; imageNode: FigmaExportNode } }> {
-  const renderable: Array<{ node: FigmaExportNode; binding?: string; isStatic: boolean; parentFrame?: FigmaExportNode; maskedImage?: { maskNode: FigmaExportNode; imageNode: FigmaExportNode } }> = [];
+function findAllRenderableNodes(nodes: FigmaExportNode[]): RenderableEntry[] {
+  const renderable: RenderableEntry[] = [];
   const skipNodeIds = new Set<string>();
 
   function traverse(node: FigmaExportNode, parentFrame?: FigmaExportNode, immediateParent?: FigmaExportNode) {
@@ -129,6 +201,18 @@ function findAllRenderableNodes(nodes: FigmaExportNode[]): Array<{ node: FigmaEx
       if (node.children) {
         node.children.forEach(child => traverse(child, node, node));
       }
+      return;
+    }
+    
+    // FRAME without binding: check for multi-line text block (2+ TEXT children with bindings)
+    if (node.type === "FRAME" && !binding && node.children) {
+      const block = asMultiLineTextBlock(node);
+      if (block) {
+        block.lines.forEach(({ node: textNode }) => skipNodeIds.add(textNode.id));
+        renderable.push({ node, isStatic: false, textBlock: block });
+        return;
+      }
+      node.children.forEach(child => traverse(child, node, node));
       return;
     }
     
@@ -155,14 +239,6 @@ function findAllRenderableNodes(nodes: FigmaExportNode[]): Array<{ node: FigmaEx
     // Track FRAME nodes as potential parents
     const currentParentFrame = node.type === "FRAME" ? node : parentFrame;
     
-    // Skip FRAME nodes without bindings (just containers) - but track them as parents
-    if (node.type === "FRAME" && !binding) {
-      if (node.children) {
-        node.children.forEach(child => traverse(child, node, node));
-      }
-      return;
-    }
-    
     // Include nodes with bindings
     if (binding) {
       // Only render FRAME (with TEXT child) when this TEXT is a *direct* child of that FRAME.
@@ -172,6 +248,10 @@ function findAllRenderableNodes(nodes: FigmaExportNode[]): Array<{ node: FigmaEx
       } else {
         renderable.push({ node, binding, isStatic: false, parentFrame });
       }
+    }
+    // Static text: TEXT node with no binding — show the layer's characters as-is on the template
+    else if (node.type === "TEXT" && !binding) {
+      renderable.push({ node, isStatic: true });
     }
     // Include static images (RECTANGLE with imageRef, or COMPONENT/INSTANCE)
     // Include static shapes: RECTANGLE/VECTOR/ELLIPSE with SOLID fill, or any such shape (even no fill) so vectors/decorations appear
@@ -198,11 +278,53 @@ function findAllRenderableNodes(nodes: FigmaExportNode[]): Array<{ node: FigmaEx
   return renderable;
 }
 
+/** Collect all unique font families and weights from the node tree for loading. */
+function collectFontFamilies(nodes: FigmaExportNode[]): Set<{ family: string; weight: number }> {
+  const out = new Set<{ family: string; weight: number }>();
+  function visit(n: FigmaExportNode) {
+    if (n.style?.fontFamily) {
+      out.add({ family: n.style.fontFamily, weight: n.style.fontWeight ?? 400 });
+    }
+    n.children?.forEach(visit);
+  }
+  nodes.forEach(visit);
+  return out;
+}
+
 /**
  * Generate HTML template from Figma export
  */
 function generateHTMLTemplate(exportData: FigmaExport): string {
   const { width, height, nodes, images, svgs } = exportData;
+  const fontSet = collectFontFamilies(nodes);
+  const fontFamilies = [...fontSet];
+  const googleFontsFamilies = fontFamilies
+    .filter((f) => f.family && f.family !== "Aspekta")
+    .map((f) => `family=${encodeURIComponent(f.family.replace(/\s+/g, "+"))}:wght@${f.weight}`);
+  const googleFontsUrl =
+    googleFontsFamilies.length > 0
+      ? `https://fonts.googleapis.com/css2?${googleFontsFamilies.join("&")}&display=swap`
+      : null;
+
+  if (process.env.NODE_ENV === "development") {
+    const textNodes: Array<{ name: string; style?: unknown; characters?: string; x: number; y: number; width: number; height: number }> = [];
+    function collectText(n: FigmaExportNode) {
+      if (n.type === "TEXT") textNodes.push({ name: n.name, style: n.style, characters: n.characters, x: n.x, y: n.y, width: n.width, height: n.height });
+      n.children?.forEach(collectText);
+    }
+    nodes.forEach(collectText);
+    if (textNodes.length > 0) {
+      console.log("[FIGMA-IMPORT] TEXT nodes sample (first 3):", JSON.stringify(textNodes.slice(0, 3), null, 2));
+      const missingStyle = textNodes.filter((t) => {
+        const s = t.style as { fontSize?: number; fontFamily?: string } | undefined;
+        return !s?.fontSize || !s?.fontFamily;
+      });
+      if (missingStyle.length > 0) {
+        console.warn("[FIGMA-IMPORT] Some TEXT nodes missing style.fontSize or style.fontFamily — rebuild plugin and ensure export sends style for every TEXT node. Count:", missingStyle.length);
+      }
+    }
+  }
+
   const svgCount = svgs ? Object.keys(svgs).filter((id) => String(svgs[id]).trim().length > 0).length : 0;
   if (process.env.NODE_ENV === "development") {
     if (svgCount === 0) {
@@ -230,7 +352,24 @@ function generateHTMLTemplate(exportData: FigmaExport): string {
   
   // Find all renderable nodes (bindings + static images)
   const renderableNodes = findAllRenderableNodes(nodes);
-  
+  const textBlockCount = renderableNodes.filter((e) => e.textBlock).length;
+  if (process.env.NODE_ENV === "development") {
+    console.log("[FIGMA-IMPORT] Root nodes:", nodes.length, "types:", nodes.map((n) => n.type).join(", "));
+    console.log("[FIGMA-IMPORT] Renderable entries:", renderableNodes.length, "text blocks:", textBlockCount);
+    if (textBlockCount === 0) {
+      function countFrameTextKids(n: FigmaExportNode): number {
+        if (n.type !== "FRAME" || !n.children) return 0;
+        const fromGroups = n.children.filter((c) => c.type === "GROUP").flatMap((g) => g.children?.filter((cc) => cc.type === "TEXT") ?? []);
+        const direct = n.children.filter((c) => c.type === "TEXT");
+        return direct.length + fromGroups.length;
+      }
+      const framesWithMultipleText = nodes.filter((n) => n.type === "FRAME" && countFrameTextKids(n) >= 2);
+      if (framesWithMultipleText.length > 0) {
+        console.warn("[FIGMA-IMPORT] No text block detected but found", framesWithMultipleText.length, "frame(s) with 2+ TEXT (direct or in GROUP). Frame names:", framesWithMultipleText.map((f) => f.name || f.id));
+      }
+    }
+  }
+
   // Get background color from root frame or Background rectangle
   let backgroundColor = "#ffffff";
   const rootFrame = nodes.find(n => n.type === "FRAME");
@@ -276,7 +415,7 @@ function generateHTMLTemplate(exportData: FigmaExport): string {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${exportData.name}</title>
-    <link rel="stylesheet" href="fonts/font-face.css">
+    <link rel="stylesheet" href="fonts/font-face.css">${googleFontsUrl ? `\n    <link rel="stylesheet" href="${googleFontsUrl}">` : ""}
     <style>
         body {
             margin: 0;
@@ -295,7 +434,62 @@ function generateHTMLTemplate(exportData: FigmaExport): string {
   // Track which FRAMEs we've already rendered to avoid duplicates
   const renderedFrames = new Set<string>();
   for (const entry of renderableNodes) {
-    const { node, binding, isStatic, parentFrame, maskedImage } = entry;
+    const { node, binding, isStatic, parentFrame, maskedImage, textBlock } = entry;
+
+    // Multi-line text block: one wrapper div (same text box) with multiple styled lines
+    if (textBlock) {
+      const { frame, lines } = textBlock;
+      if (process.env.NODE_ENV === "development") {
+        const lineSummary = lines.map((l, i) => {
+          const binding = l.binding ? `binding=${l.binding}` : "";
+          const chars = (l.node.characters ?? "").slice(0, 40);
+          return `line${i + 1}: ${binding || `characters=${chars ? `"${chars}..."` : "(empty)"}`}`;
+        });
+        console.log("[FIGMA-IMPORT] Text block:", frame.name || frame.id, "lines:", lines.length, lineSummary);
+      }
+      let frameBg = "transparent";
+      if (frame.fills && frame.fills.length > 0) {
+        const frameFill = frame.fills[0];
+        if (frameFill.type === "SOLID" && (frameFill as { color?: { r: number; g: number; b: number; a?: number } }).color) {
+          const c = (frameFill as { color: { r: number; g: number; b: number; a?: number } }).color;
+          frameBg = figmaColorToHex(c);
+        }
+      }
+      const boxStyle = `position: absolute; left: ${frame.x}px; top: ${frame.y}px; width: ${frame.width}px; height: ${frame.height}px; background-color: ${frameBg}; box-sizing: border-box; overflow: visible;`;
+      html += `
+    <div class="text-block" style="${boxStyle}">`;
+      for (let i = 0; i < lines.length; i++) {
+        const { node: textNode, binding: lineBinding } = lines[i];
+        const textStyle = textNode.style || {};
+        const fontSize = textStyle.fontSize ?? 16;
+        const fontWeight = textStyle.fontWeight ?? 400;
+        const fontFamily = textStyle.fontFamily ? `'${textStyle.fontFamily}', sans-serif` : "'Aspekta', sans-serif";
+        const textAlign = (textStyle.textAlign || "LEFT").toLowerCase().replace("justified", "left");
+        const fill = textStyle.fill || "#000000";
+        const w = Math.max(textNode.width ?? 100, 1);
+        const h = Math.max(textNode.height ?? 24, 1);
+        const relX = textNode.x - frame.x;
+        const relY = textNode.y - frame.y;
+        const lineLeft = relX >= 0 && relY >= 0 ? relX : textNode.x;
+        const lineTop = relX >= 0 && relY >= 0 ? relY : textNode.y;
+        const letterSpacing = textStyle.letterSpacing != null ? `letter-spacing: ${textStyle.letterSpacing}px;` : "";
+        const lineHeightCss = getLineHeightCss(textStyle, fontSize, h);
+        const hasNewlines = (textNode.characters ?? "").includes("\n");
+        const whiteSpace = hasNewlines ? "pre-line" : "nowrap";
+        const lineStyle = `position: absolute; left: ${lineLeft}px; top: ${lineTop}px; width: ${w}px; min-height: ${h}px; margin: 0; padding: 0; font-family: ${fontFamily}; font-size: ${fontSize}px; font-weight: ${fontWeight}; color: ${fill}; text-align: ${textAlign}; line-height: ${lineHeightCss}; ${letterSpacing} display: flex; align-items: flex-start; ${textAlign === "center" ? "justify-content: center;" : textAlign === "right" ? "justify-content: flex-end;" : ""} white-space: ${whiteSpace}; overflow: visible; box-sizing: border-box;`;
+        const rawContent = textNode.characters ?? "";
+        const lineContent = lineBinding
+          ? `{{${lineBinding}}}`
+          : rawContent !== ""
+            ? escapeHtml(rawContent)
+            : "\u00A0"; // Non-breaking space so the line box doesn't collapse when plugin omits characters
+        html += `
+      <div class="text-block-line" data-line="${i + 1}" style="${lineStyle}">${lineContent}</div>`;
+      }
+      html += `
+    </div>`;
+      continue;
+    }
 
     // Masked image group: one SVG with mask + image so the image appears clipped by the mask
     if (maskedImage) {
@@ -331,6 +525,27 @@ function generateHTMLTemplate(exportData: FigmaExport): string {
     }
 
     if (isStatic) {
+      // Static text (no {{binding}} — print the layer's characters as-is, exact position/size/font from Figma)
+      if (node.type === "TEXT") {
+        const textStyle = node.style || {};
+        const fontSize = textStyle.fontSize ?? 16;
+        const fontWeight = textStyle.fontWeight ?? 400;
+        const fontFamily = textStyle.fontFamily ? `'${textStyle.fontFamily}', sans-serif` : "'Aspekta', sans-serif";
+        const textAlign = (textStyle.textAlign || "LEFT").toLowerCase().replace("justified", "left");
+        const fill = textStyle.fill || "#000000";
+        const w = Math.max(node.width ?? 100, 1);
+        const h = Math.max(node.height ?? 24, 1);
+        const letterSpacing = textStyle.letterSpacing != null ? `letter-spacing: ${textStyle.letterSpacing}px;` : "";
+        const lineHeightCss = getLineHeightCss(node.style, fontSize, h);
+        const rawChars = node.characters ?? "";
+        const hasNewlines = rawChars.includes("\n");
+        const whiteSpace = hasNewlines ? "pre-line" : "normal";
+        const style = `position: absolute; left: ${node.x}px; top: ${node.y}px; width: ${w}px; height: ${h}px; margin: 0; padding: 0; font-family: ${fontFamily}; font-size: ${fontSize}px; font-weight: ${fontWeight}; color: ${fill}; text-align: ${textAlign}; line-height: ${lineHeightCss}; ${letterSpacing} white-space: ${whiteSpace}; display: flex; align-items: flex-start; ${textAlign === "center" ? "justify-content: center;" : textAlign === "right" ? "justify-content: flex-end;" : ""} box-sizing: border-box; overflow: hidden;`;
+        const content = rawChars !== "" ? escapeHtml(rawChars) : "\u00A0";
+        html += `
+    <div style="${style}">${content}</div>`;
+        continue;
+      }
       // Static image (no binding - hardcoded in template)
       const imageRef = node.fills?.find(f => f.type === "IMAGE" && f.imageRef)?.imageRef;
       if (imageRef && images?.[imageRef]) {
@@ -409,30 +624,34 @@ function generateHTMLTemplate(exportData: FigmaExport): string {
               }
             }
             
-            // Get padding from text position relative to frame
-            // Text child position is relative to the frame
+            // Padding from text position relative to frame (1:1 with Figma margins/inset)
             const paddingLeft = Math.max(0, textChild.x || 0);
-            const paddingRight = Math.max(0, node.width - (textChild.x + textChild.width) || 0);
-            
-            // Frame with text that stays on one line - use flexbox for perfect centering
+            const paddingRight = Math.max(0, node.width! - (textChild.x! + textChild.width!) || 0);
+            const paddingTop = Math.max(0, textChild.y || 0);
+            const paddingBottom = Math.max(0, node.height! - (textChild.y! + textChild.height!) || 0);
+            const lineHeightCss = getLineHeightCss(textChild.style, fontSize, textChild.height);
+            const letterSpacing = textChild.style?.letterSpacing != null ? `letter-spacing: ${textChild.style.letterSpacing}px;` : "";
+
             html += `
-    <div style="position: absolute; left: ${node.x}px; top: ${node.y}px; width: ${node.width}px; height: ${node.height}px; background-color: ${frameBg}; display: flex; align-items: center; justify-content: ${textAlign === "center" ? "center" : textAlign === "right" ? "flex-end" : "flex-start"}; padding-left: ${paddingLeft}px; padding-right: ${paddingRight}px; box-sizing: border-box; overflow: hidden;">
-        <div style="font-family: ${fontFamily}; font-size: ${fontSize}px; font-weight: ${fontWeight}; color: ${fill}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;">
+    <div style="position: absolute; left: ${node.x}px; top: ${node.y}px; width: ${node.width}px; height: ${node.height}px; margin: 0; padding: ${paddingTop}px ${paddingRight}px ${paddingBottom}px ${paddingLeft}px; background-color: ${frameBg}; display: flex; align-items: flex-start; justify-content: ${textAlign === "center" ? "center" : textAlign === "right" ? "flex-end" : "flex-start"}; box-sizing: border-box; overflow: hidden;">
+        <div style="margin: 0; padding: 0; font-family: ${fontFamily}; font-size: ${fontSize}px; font-weight: ${fontWeight}; line-height: ${lineHeightCss}; ${letterSpacing} color: ${fill}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;">
             {{${binding}}}
         </div>
     </div>`;
           }
         } else {
-          // Regular text/date fields
+          // Regular text/date fields (TEXT node with binding)
           const textStyle = node.style || {};
           const fontSize = textStyle.fontSize || 48;
           const fontWeight = textStyle.fontWeight || 400;
           const fontFamily = textStyle.fontFamily ? `'${textStyle.fontFamily}', sans-serif` : "'Aspekta', sans-serif";
           const textAlign = textStyle.textAlign?.toLowerCase() || "left";
           const fill = textStyle.fill || "#000000";
-          
+          const lineHeightCss = getLineHeightCss(textStyle, fontSize, node.height);
+          const letterSpacing = textStyle.letterSpacing != null ? `letter-spacing: ${textStyle.letterSpacing}px;` : "";
+
           html += `
-    <div style="position: absolute; left: ${node.x}px; top: ${node.y}px; width: ${node.width}px; height: ${node.height}px; font-family: ${fontFamily}; font-size: ${fontSize}px; font-weight: ${fontWeight}; color: ${fill}; text-align: ${textAlign}; display: flex; align-items: center; ${textAlign === "center" ? "justify-content: center;" : ""}">
+    <div style="position: absolute; left: ${node.x}px; top: ${node.y}px; width: ${node.width}px; height: ${node.height}px; margin: 0; padding: 0; font-family: ${fontFamily}; font-size: ${fontSize}px; font-weight: ${fontWeight}; line-height: ${lineHeightCss}; ${letterSpacing} color: ${fill}; text-align: ${textAlign}; display: flex; align-items: flex-start; ${textAlign === "center" ? "justify-content: center;" : textAlign === "right" ? "justify-content: flex-end;" : ""} box-sizing: border-box; overflow: hidden;">
         {{${binding}}}
     </div>`;
         }
@@ -459,12 +678,8 @@ function extractAllBindings(nodes: FigmaExportNode[]): Map<string, { node: Figma
       // Infer field type from node type
       let fieldType: string;
       if (node.type === "TEXT") {
-        // Special case: if binding name contains "date" or "Date", treat as date field
-        if (binding.toLowerCase().includes("date")) {
-          fieldType = "date";
-        } else {
-          fieldType = "text";
-        }
+        // All TEXT bindings are text fields (date is entered manually by the user)
+        fieldType = "text";
       } else if (node.type === "FRAME") {
         // FRAME with binding = auto-expanding text field
         fieldType = "text";
@@ -532,17 +747,6 @@ function generateConfig(exportData: FigmaExport): TemplateConfig {
         maxLength: 100,
         replacements: [
           { pattern: `{{${bindingName}}}`, type: "text" }
-        ]
-      });
-    } else if (type === "date") {
-      fields.push({
-        type: "date",
-        name: bindingName,
-        label: label,
-        format: "MMMM", // Default to month format, can be customized
-        locale: "en",
-        replacements: [
-          { pattern: `{{${bindingName}}}`, type: "date" }
         ]
       });
     } else if (type === "image") {

@@ -1049,6 +1049,29 @@ Template Registry
 
 ---
 
+## 🔮 Future: Plugin UX, Auth & Monetization
+
+Planned product and plugin enhancements (no phase dates yet).
+
+### Template UX
+- **Multi-line styled text in one block:** In Figma use one frame with two (or N) text layers, e.g. `{{eventDate}}` (bold/larger) and `{{doorTime}}` (normal). App renders one wrapper div with one line per placeholder and line-specific CSS. Same text box, different styles per line.
+
+### Auth & data
+- **Auth and DB stay in the app only.** Plugin is a client: it calls app APIs with the user’s session (browser flow) or an API key. No shared database or auth system with the plugin.
+
+### Login & payments
+- **Login in plugin:** Support token/API-key flow (e.g. “Log in” opens app, user copies API key into plugin, or OAuth returns token). Plugin sends token with requests.
+- **Payments on the app:** Checkout and subscriptions (e.g. Stripe) live on the app. Plugin only checks entitlement: API returns whether the user can use a feature; plugin shows upgrade prompt or opens app’s pricing/checkout when needed.
+
+### Plugin capabilities
+- **Templates in plugin:** Plugin calls `GET /api/templates` (with auth); show template list in plugin UI so users can pick and export without leaving Figma. Same source of truth as the browser app.
+- **Image upload from plugin:** Plugin UI file input → plugin sends image to app (e.g. `POST /api/upload` or as part of import payload); app stores or processes it.
+
+### Template access control
+- **Restrict who can use which templates:** Store allowlist (e.g. `allowedUserIds`, `allowedEmails`) or plan (e.g. `requiredPlan`) per template. In `GET /api/templates` filter by current user; in submit/render return 403 if user is not allowed. Plugin uses same APIs and automatically sees only allowed templates.
+
+---
+
 ## 🚦 Decision Points
 
 ### Decision 1: Cloud Storage Provider

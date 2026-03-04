@@ -4,8 +4,6 @@
  * Ensures consistent formatting for dates, times, and nested fields
  */
 
-import { format } from "date-fns";
-import { fr } from "date-fns/locale";
 import { Submission } from "@prisma/client";
 import { TemplateConfig, TemplateField } from "./template-registry";
 
@@ -27,7 +25,7 @@ export function resolveFieldValue(
     case "eventTitle":
       return submission.eventTitle;
     case "eventDate":
-      return formatDateField(submission, config);
+      return submission.eventDate != null ? String(submission.eventDate) : "";
     case "doorTime":
       return formatTimeField(submission, config);
     case "venueName":
@@ -47,22 +45,6 @@ export function resolveFieldValue(
       // Try to get from submission directly
       return (submission as any)[fieldName]?.toString();
   }
-}
-
-/**
- * Format date field based on config
- */
-function formatDateField(submission: Submission, config: TemplateConfig): string {
-  const dateField = config.fields && Array.isArray(config.fields) 
-    ? config.fields.find(f => f.name === "eventDate") 
-    : undefined;
-  
-  if (!dateField || !dateField.format) {
-    return submission.eventDate.toString();
-  }
-
-  const locale = dateField.locale === "fr" ? fr : undefined;
-  return format(submission.eventDate, dateField.format, locale ? { locale } : undefined);
 }
 
 /**

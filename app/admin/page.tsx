@@ -7,6 +7,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { FileDown, FileText, Link2, Pencil, Trash2 } from "lucide-react";
 
 type TemplateRow = { family: string; name: string; format: string };
@@ -40,6 +50,10 @@ export default function AdminPage() {
   const [editError, setEditError] = useState("");
 
   const [activeTab, setActiveTab] = useState<"templates" | "marketing">("templates");
+
+  const [deleteTemplateFamily, setDeleteTemplateFamily] = useState<string | null>(null);
+  const [deleteToolSlug, setDeleteToolSlug] = useState<string | null>(null);
+  const [errorAlert, setErrorAlert] = useState<{ title: string; description: string } | null>(null);
 
   useEffect(() => {
     const hash = typeof window !== "undefined" ? window.location.hash.slice(1) : "";
@@ -111,6 +125,7 @@ export default function AdminPage() {
     e.preventDefault();
     if (!file) {
       setImportStatus("Choose a file first.");
+      setErrorAlert({ title: "Import", description: "Choose a file first." });
       return;
     }
     setImporting(true);
@@ -119,7 +134,9 @@ export default function AdminPage() {
       const text = await file.text();
       const body = JSON.parse(text);
       if (body.id && body.children && !body.nodes && body.name !== undefined && body.width === undefined) {
-        setImportStatus("Wrong file. Use the converted import file. In terminal run: bun run figma:to-import examples/figma-raw-TQ8HjO6jnzMjvKUnAQNhAN-808-249.json (with FIGMA_ACCESS_TOKEN in .env for SVGs). Then upload the generated figma-import-*.json from the examples folder.");
+        const msg = "Wrong file. Use the converted import file. In terminal run: bun run figma:to-import then upload the generated figma-import-*.json.";
+        setImportStatus(msg);
+        setErrorAlert({ title: "Wrong file format", description: msg });
         setImporting(false);
         return;
       }
@@ -130,7 +147,9 @@ export default function AdminPage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setImportStatus(`Error: ${data.error ?? res.statusText}`);
+        const msg = data.error ?? res.statusText;
+        setImportStatus(`Error: ${msg}`);
+        setErrorAlert({ title: "Import failed", description: String(msg) });
         setImporting(false);
         return;
       }
@@ -138,7 +157,9 @@ export default function AdminPage() {
       setFile(null);
       fetchTemplates();
     } catch (err) {
-      setImportStatus(`Error: ${err instanceof Error ? err.message : String(err)}`);
+      const msg = err instanceof Error ? err.message : String(err);
+      setImportStatus(`Error: ${msg}`);
+      setErrorAlert({ title: "Import failed", description: msg });
     } finally {
       setImporting(false);
     }
@@ -149,6 +170,7 @@ export default function AdminPage() {
     const raw = pasteJson.trim();
     if (!raw) {
       setImportStatus("Paste JSON first.");
+      setErrorAlert({ title: "Import", description: "Paste JSON first." });
       return;
     }
     setImporting(true);
@@ -156,7 +178,9 @@ export default function AdminPage() {
     try {
       const body = JSON.parse(raw);
       if (body.id && body.children && !body.nodes && body.name !== undefined && body.width === undefined) {
-        setImportStatus("Wrong format. Use converted import JSON (name, width, height, nodes[]). Run: bun run figma:to-import <raw-file> then paste the generated figma-import-*.json.");
+        const msg = "Wrong format. Use converted import JSON (name, width, height, nodes[]). Run: bun run figma:to-import then paste the generated figma-import-*.json.";
+        setImportStatus(msg);
+        setErrorAlert({ title: "Wrong format", description: msg });
         setImporting(false);
         return;
       }
@@ -167,7 +191,9 @@ export default function AdminPage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setImportStatus(`Error: ${data.error ?? res.statusText}`);
+        const msg = data.error ?? res.statusText;
+        setImportStatus(`Error: ${msg}`);
+        setErrorAlert({ title: "Import failed", description: String(msg) });
         setImporting(false);
         return;
       }
@@ -175,7 +201,9 @@ export default function AdminPage() {
       setPasteJson("");
       fetchTemplates();
     } catch (err) {
-      setImportStatus(`Error: ${err instanceof Error ? err.message : String(err)}`);
+      const msg = err instanceof Error ? err.message : String(err);
+      setImportStatus(`Error: ${msg}`);
+      setErrorAlert({ title: "Import failed", description: msg });
     } finally {
       setImporting(false);
     }
@@ -191,18 +219,22 @@ export default function AdminPage() {
     const iframeUrl = toolForm.iframeUrl.trim();
     if (!name) {
       setAddToolError("Name is required.");
+      setErrorAlert({ title: "Validation error", description: "Name is required." });
       return;
     }
     if (!slug) {
       setAddToolError("Slug is required.");
+      setErrorAlert({ title: "Validation error", description: "Slug is required." });
       return;
     }
     if (!description) {
       setAddToolError("Description is required.");
+      setErrorAlert({ title: "Validation error", description: "Description is required." });
       return;
     }
     if (!iframeUrl) {
       setAddToolError("Iframe URL is required.");
+      setErrorAlert({ title: "Validation error", description: "Iframe URL is required." });
       return;
     }
     setAddingTool(true);
@@ -214,13 +246,16 @@ export default function AdminPage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setAddToolError(data.detail ? `${data.error}: ${data.detail}` : (data.error ?? "Failed to add tool"));
+        const errMsg = data.detail ? `${data.error}: ${data.detail}` : (data.error ?? "Failed to add tool");
+        setAddToolError(errMsg);
+        setErrorAlert({ title: "Add tool failed", description: errMsg });
         return;
       }
       setToolForm({ name: "", slug: "", description: "", author: "", iframeUrl: "" });
       setMarketingTools((prev) => [...prev, data]);
     } catch (e) {
       setAddToolError("Request failed");
+      setErrorAlert({ title: "Add tool failed", description: "Request failed. Try again." });
     } finally {
       setAddingTool(false);
     }
@@ -249,6 +284,7 @@ export default function AdminPage() {
     const iframeUrl = editForm.iframeUrl.trim();
     if (!name || !slug || !description || !iframeUrl) {
       setEditError("All fields are required.");
+      setErrorAlert({ title: "Validation error", description: "All fields are required." });
       return;
     }
     setSavingEdit(true);
@@ -260,49 +296,64 @@ export default function AdminPage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setEditError(data.error ?? "Failed to save");
+        const errMsg = data.error ?? "Failed to save";
+        setEditError(errMsg);
+        setErrorAlert({ title: "Save failed", description: errMsg });
         return;
       }
       setMarketingTools((prev) => prev.map((t) => (t.slug === editingSlug ? data : t)));
       setEditingSlug(null);
     } catch (e) {
       setEditError("Request failed");
+      setErrorAlert({ title: "Save failed", description: "Request failed. Try again." });
     } finally {
       setSavingEdit(false);
     }
   }
 
-  async function handleDeleteTool(slug: string) {
-    if (!confirm(`Delete marketing tool "${slug}"?`)) return;
+  function openDeleteToolDialog(slug: string) {
+    setDeleteToolSlug(slug);
+  }
+
+  async function confirmDeleteTool() {
+    const slug = deleteToolSlug;
+    if (!slug) return;
+    setDeleteToolSlug(null);
     setDeletingTool(slug);
     try {
       const res = await fetch(`/api/marketing-tools/${encodeURIComponent(slug)}`, { method: "DELETE" });
       const data = await res.json();
       if (!res.ok) {
-        alert(data.error ?? "Delete failed");
+        setErrorAlert({ title: "Delete failed", description: data.error ?? "Could not delete the marketing tool." });
         return;
       }
       setMarketingTools((prev) => prev.filter((t) => t.slug !== slug));
     } catch (e) {
-      alert("Delete failed");
+      setErrorAlert({ title: "Delete failed", description: "Network or server error. Try again." });
     } finally {
       setDeletingTool(null);
     }
   }
 
-  async function handleDelete(family: string) {
-    if (!confirm(`Delete template "${family}"?`)) return;
+  function openDeleteTemplateDialog(family: string) {
+    setDeleteTemplateFamily(family);
+  }
+
+  async function confirmDeleteTemplate() {
+    const family = deleteTemplateFamily;
+    if (!family) return;
+    setDeleteTemplateFamily(null);
     setDeleting(family);
     try {
       const res = await fetch(`/api/templates/${encodeURIComponent(family)}`, { method: "DELETE" });
       const data = await res.json();
       if (!res.ok) {
-        alert(data.error ?? "Delete failed");
+        setErrorAlert({ title: "Delete failed", description: data.error ?? "Could not delete the template." });
         return;
       }
       setTemplates((prev) => prev.filter((t) => t.family !== family));
     } catch (e) {
-      alert("Delete failed");
+      setErrorAlert({ title: "Delete failed", description: "Network or server error. Try again." });
     } finally {
       setDeleting(null);
     }
@@ -413,7 +464,7 @@ export default function AdminPage() {
                         type="button"
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleDelete(t.family)}
+                        onClick={() => openDeleteTemplateDialog(t.family)}
                         disabled={deleting === t.family}
                         className="text-destructive hover:text-destructive shrink-0"
                       >
@@ -637,7 +688,7 @@ export default function AdminPage() {
                               type="button"
                               variant="ghost"
                               size="sm"
-                              onClick={() => handleDeleteTool(t.slug)}
+                              onClick={() => openDeleteToolDialog(t.slug)}
                               disabled={deletingTool === t.slug}
                               className="text-destructive hover:text-destructive"
                               title="Delete"
@@ -656,6 +707,52 @@ export default function AdminPage() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      <AlertDialog open={deleteTemplateFamily !== null} onOpenChange={(open) => !open && setDeleteTemplateFamily(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete template?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete the template &quot;{deleteTemplateFamily}&quot;. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDeleteTemplate} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={deleteToolSlug !== null} onOpenChange={(open) => !open && setDeleteToolSlug(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete marketing tool?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete the tool &quot;{deleteToolSlug}&quot;. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDeleteTool} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={errorAlert !== null} onOpenChange={(open) => !open && setErrorAlert(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{errorAlert?.title ?? "Error"}</AlertDialogTitle>
+            <AlertDialogDescription>{errorAlert?.description ?? "Something went wrong."}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setErrorAlert(null)}>OK</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

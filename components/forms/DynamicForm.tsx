@@ -16,7 +16,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DatePicker } from "@/components/DatePicker";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { X } from "lucide-react";
 import { TemplateConfig, TemplateField } from "@/lib/template-registry";
 
@@ -102,7 +110,7 @@ function buildSchema(config: TemplateConfig) {
     } else if (field.type === "color") {
       schema[field.name] = z.string().min(1);
     } else if (field.type === "date") {
-      schema[field.name] = z.date();
+      schema[field.name] = z.string().max(120); // Manual date text, e.g. "November 20, 2024"
     } else if (field.type === "time") {
       schema[field.name] = z.string();
     } else if (field.type === "image") {
@@ -131,6 +139,7 @@ function buildSchema(config: TemplateConfig) {
 export default function DynamicForm({ templateFamily, config }: DynamicFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorAlert, setErrorAlert] = useState<{ title: string; description: string } | null>(null);
 
   const schema = buildSchema(config);
   type FormData = z.infer<typeof schema>;
@@ -160,7 +169,7 @@ export default function DynamicForm({ templateFamily, config }: DynamicFormProps
         } else if (field.type === "color") {
           acc[field.name] = field.default || "#3D9DFF";
         } else if (field.type === "date") {
-          acc[field.name] = new Date();
+          acc[field.name] = "";
         } else if (field.type === "time") {
           acc[field.name] = field.default || "18:00";
         }
@@ -197,12 +206,9 @@ export default function DynamicForm({ templateFamily, config }: DynamicFormProps
       
       // Append all dynamic text/date/time fields from config (always send every field so server has keys for replacement)
       config.fields.forEach((field) => {
-        if (field.type === "text" || field.type === "time") {
+        if (field.type === "text" || field.type === "time" || field.type === "date") {
           const value = data[field.name as keyof FormData];
           formData.append(field.name, (value as string) ?? "");
-        } else if (field.type === "date") {
-          const dateValue = data[field.name as keyof FormData] as Date | undefined;
-          formData.append(field.name, dateValue ? new Date(dateValue).toISOString() : "");
         }
       });
       
@@ -258,29 +264,29 @@ export default function DynamicForm({ templateFamily, config }: DynamicFormProps
       router.push(`/results/${result.submissionId}`);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to submit. Please try again.";
-      alert(message);
+      setErrorAlert({ title: "Submission failed", description: message });
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const onError = (errors: any) => {
-    // Find the first error and show which field it is
     const errorEntries = Object.entries(errors);
     if (errorEntries.length > 0) {
       const [fieldName, error] = errorEntries[0];
       const errorMessage = (error as any)?.message || "Validation error";
       const fieldLabel = config.fields.find(f => f.name === fieldName)?.label || fieldName;
-      alert(`Validation error in "${fieldLabel}": ${errorMessage}`);
+      setErrorAlert({ title: "Validation error", description: `"${fieldLabel}": ${errorMessage}` });
       console.error("Form validation errors:", errors);
     } else {
-      alert("Validation error: Please check all required fields");
+      setErrorAlert({ title: "Validation error", description: "Please check all required fields." });
     }
   };
 
   const hasColorFields = config.fields.some((f) => f.type === "color");
 
   return (
+    <>
     <form onSubmit={handleSubmit(onSubmit, onError)} className="space-y-8">
       
       {/* Color Section - only when template has color fields in config */}
@@ -409,11 +415,17 @@ export default function DynamicForm({ templateFamily, config }: DynamicFormProps
             .map((field) => (
               <div key={field.name}>
                 <Label htmlFor={field.name}>{field.label}</Label>
-                <DatePicker
-                  value={watch(field.name as keyof FormData) as Date}
-                  onChange={(date) => setValue(field.name as keyof FormData, date! as any)}
-                  error={errors[field.name as keyof typeof errors]?.message as string | undefined}
+                <Input
+                  id={field.name}
+                  type="text"
+                  placeholder="e.g. November 20, 2024"
+                  {...register(field.name as keyof FormData)}
                 />
+                {errors[field.name as keyof typeof errors] && (
+                  <p className="text-sm text-destructive mt-1">
+                    {(errors[field.name as keyof typeof errors] as any)?.message as string}
+                  </p>
+                )}
               </div>
             ))}
 
@@ -592,6 +604,18 @@ export default function DynamicForm({ templateFamily, config }: DynamicFormProps
         </Button>
       </div>
     </form>
+    <AlertDialog open={errorAlert !== null} onOpenChange={(open) => !open && setErrorAlert(null)}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{errorAlert?.title ?? "Error"}</AlertDialogTitle>
+          <AlertDialogDescription>{errorAlert?.description ?? "Something went wrong."}</AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogAction onClick={() => setErrorAlert(null)}>OK</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }
 

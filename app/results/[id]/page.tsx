@@ -102,10 +102,10 @@ export default async function ResultsPage({
                 <img
                   src={previewUrl}
                   alt="Generated poster"
-                  className="w-full border rounded-lg"
+                  className="w-full rounded-lg"
                 />
               ) : previewOutput ? (
-                <div className="border rounded-lg p-8 text-center">
+                <div className="rounded-lg p-8 text-center">
                   <p className="mb-4">PDF generated successfully</p>
                   <a href={previewOutput.url} download>
                     <Button>

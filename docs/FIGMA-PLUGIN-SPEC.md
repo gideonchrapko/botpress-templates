@@ -162,14 +162,18 @@ interface FigmaExportPayload {
       width: number;
       height: number;
       children?: FigmaExportNode[];
-      // TEXT
+      // TEXT — include all of these so rendering matches Figma exactly (position, size, font)
       characters?: string;
       style?: {
-        fontFamily?: string;
-        fontSize?: number;
+        fontFamily?: string;   // exact family name from Figma (e.g. "Inter", "Aspekta")
+        fontSize?: number;     // px
         fontWeight?: number;
         textAlign?: "LEFT" | "CENTER" | "RIGHT";
-        fill?: string; // hex e.g. "#000000"
+        fill?: string;         // hex e.g. "#000000"
+        letterSpacing?: number; // px (optional)
+        lineHeightPx?: number;  // px — preferred for 1:1 line height
+        lineHeightUnit?: "PIXELS" | "PERCENT" | "AUTO";  // Figma unit
+        lineHeightValue?: number;  // when PIXELS: px; when PERCENT: e.g. 150 for 150%
       };
       // Fills (SOLID or IMAGE)
       fills?: Array<
@@ -184,6 +188,7 @@ interface FigmaExportPayload {
 ```
 
 - **Coordinates:** All `x`, `y` (and sizes) for the root and every descendant must be in the same coordinate system: **relative to the exported frame’s top-left**. So when you export a frame, use its `absoluteBoundingBox` (or equivalent) as the origin and subtract that from every child’s position.
+- **TEXT style for exact font match:** For every TEXT node, send `style.fontFamily`, `style.fontSize`, and `style.fontWeight` from Figma. The app loads non-Aspekta fonts via Google Fonts so the rendered template matches Figma. For **1:1 line height and margins**, also send `letterSpacing`, and either `lineHeightPx` (preferred) or `lineHeightUnit` + `lineHeightValue` (e.g. PERCENT + 150). The app uses text node `x`/`y`/`width`/`height` relative to the frame to derive padding/margins so layout matches Figma.
 - **Ids:** Use the Figma node `id` (e.g. `"540:1850"`) for every node. The same ids are used in `svgs` and (for images) in `fills[].imageRef` / `images`.
 
 ---
@@ -196,6 +201,12 @@ Layer **names** drive form fields and replacements:
 - The backend creates a form field per unique binding and replaces these placeholders when users fill the form and generate the template.
 - **Text:** `{{fieldName}}` on a TEXT node or a FRAME that contains a TEXT node.
 - **Image:** `{{fieldName}}` on a RECTANGLE (or similar) with an IMAGE fill; the image can be swapped at generation time (e.g. speaker photo, logo).
+
+**Multi-line text block (one box, two or more styled lines):** Use one **FRAME** with no binding on the frame itself, and **two or more TEXT layers** inside it. Give each line a binding (e.g. `{{eventDate}}`) or leave it without `{{}}` to use that layer's characters as static text. Style each line in Figma (bold/larger for the first, normal for the second). The backend emits one wrapper div (the “text box”) with one div per line and per-line styles so each line keeps its own font size and weight.
+
+**Getting text to show on each line:** For every TEXT node (including each line in a multi-line block), the plugin **must** send `characters` in the payload. If `characters` is missing, that line will render empty. Set `characters` from the layer's text (e.g. Figma's `node.characters`). For bindings, that text is replaced at generation time; for static lines, it is shown as-is.
+
+**Static text (no binding):** Any TEXT layer whose name does **not** contain `{{fieldName}}` is rendered as static text: the backend uses the layer's **characters** and does not create a form field. Export **characters** for every TEXT node.
 
 Keep layer names exactly as in Figma (including `{{` and `}}`) in the exported `name` field.
 
@@ -351,7 +362,19 @@ If you follow this spec, the payload will be accepted by this app’s backend an
 
 ---
 
-## 13. Maintenance: Keeping Backend and Plugin in Sync
+## 13. Future (roadmap)
+
+Planned enhancements—see **MIGRATION-ROADMAP.md** § “Future: Plugin UX, Auth & Monetization” for full detail.
+
+- **Auth/DB:** Stay in the app only; plugin is a client (session or API key).
+- **Login in plugin:** Token/API-key flow; payments handled on the app, plugin checks entitlement via API.
+- **Templates in plugin:** Call `GET /api/templates` (with auth) to show template list in the plugin.
+- **Image upload:** Plugin can send image bytes to app (e.g. `POST /api/upload` or in import payload).
+- **Template access control:** App restricts which users can use which templates (allowlist or plan); plugin sees only allowed templates via the same APIs.
+
+---
+
+## 14. Maintenance: Keeping Backend and Plugin in Sync
 
 So that edits in this app are easy to reflect in the plugin (and vice versa), use this workflow:
 
@@ -371,3 +394,32 @@ So that edits in this app are easy to reflect in the plugin (and vice versa), us
 - **Small “version” note (optional):** At the top of the spec you can add a line like `Spec version: 2025-03` or a short changelog (e.g. “- 2025-03: Added masked image GROUP to SVG export.”). When the plugin team (or you in the plugin repo) pulls or copies the spec, they can check that line to see if they’re up to date.
 
 If the spec is always updated in this repo when the backend changes, communicating back and forth with Cursor is straightforward: change this app and the spec here, then in the plugin project point Cursor at the updated spec (or the relevant section) and ask it to align the plugin code.
+
+---
+
+## 15. Troubleshooting: Text or fonts wrong after import
+
+If the rendered template doesn’t match Figma (text missing, wrong size, wrong font), work through this list:
+
+1. **Rebuild the plugin**  
+   After any change to what the plugin exports (e.g. TEXT `style`, `characters`, coordinates), rebuild the plugin so the new code runs in Figma.
+
+2. **Re-export from Figma**  
+   In Figma, run the plugin again and export the frame(s). The new payload must include for every TEXT node: `characters`, `x`, `y`, `width`, `height`, and `style` with at least `fontFamily`, `fontSize`, `fontWeight`, `textAlign`, `fill`.
+
+3. **Re-import into the app**  
+   The app uses the **last imported** payload to generate HTML. If you don’t re-import, it keeps using the old one. In the app: Admin → Templates → paste the new JSON (or upload the new file) and click Import. Then create a new submission or open the template again and generate.
+
+4. **Check server logs when you import**  
+   With the app running in dev (`bun run dev`), trigger an import. In the terminal you should see:
+   - `[FIGMA-IMPORT] TEXT nodes sample (first 3):` — shows the first 3 TEXT nodes and their `style` and `characters`. If `style.fontSize` or `style.fontFamily` is missing, the plugin is not sending them; fix the plugin export and repeat from step 1.
+   - If you see `Some TEXT nodes missing style.fontSize or style.fontFamily`, update the plugin so every TEXT node includes `style.fontFamily` and `style.fontSize` in the payload.
+
+5. **Coordinates**  
+   All node `x`, `y` (and `width`, `height`) must be **relative to the exported frame’s top-left**. If the plugin sends a different coordinate system, text and blocks can be in the wrong place or off-screen.
+
+6. **Line height and margins**  
+   For 1:1 line height, send `style.lineHeightPx` (or `lineHeightUnit` + `lineHeightValue`) for every TEXT node. For 1:1 margins/inset, the app derives padding from the text node’s position inside its parent frame; ensure TEXT nodes have correct `x`, `y`, `width`, `height` relative to the frame so the app can compute padding correctly.
+
+7. **Text not showing on lines (multi-line block or static text)**  
+   Every TEXT node must include `characters` in the payload (the layer text content, e.g. from Figma `node.characters`). If `characters` is missing, that line will render empty. Check the `[FIGMA-IMPORT] TEXT nodes sample` log: each TEXT node should have a `characters` property. If it is missing or empty, the plugin export is not sending it; add it when building each TEXT node in the payload.

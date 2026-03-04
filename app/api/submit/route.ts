@@ -133,7 +133,7 @@ export async function POST(req: NextRequest) {
           venueName: "",
           addressLine: "",
           cityLine: "",
-          eventDate: new Date(),
+          eventDate: "",
           doorTime: "",
           people: JSON.stringify([]),
           uploadUrls: JSON.stringify({
@@ -174,12 +174,9 @@ export async function POST(req: NextRequest) {
     const dynamicFields: Record<string, string> = {};
     if (config) {
       for (const field of config.fields) {
-        if (field.type === "text" || field.type === "time") {
+        if (field.type === "text" || field.type === "time" || field.type === "date") {
           const value = formData.get(field.name) as string | null;
           dynamicFields[field.name] = value ?? "";
-        } else if (field.type === "date") {
-          const value = formData.get(field.name) as string | null;
-          dynamicFields[field.name] = value ? new Date(value).toISOString() : "";
         }
       }
     }
@@ -187,7 +184,7 @@ export async function POST(req: NextRequest) {
     // Backwards compatibility: use hardcoded fields if they exist, otherwise use defaults
     const eventTitle = (formData.get("eventTitle") as string) || dynamicFields.eventTitle as string || "";
     const eventDateValue = formData.get("eventDate") as string;
-    const eventDate = eventDateValue ? new Date(eventDateValue) : (dynamicFields.eventDate ? new Date(dynamicFields.eventDate) : new Date());
+    const eventDate = eventDateValue ?? dynamicFields.eventDate ?? "";
     const doorTime = (formData.get("doorTime") as string) || dynamicFields.doorTime as string || "18:00";
     
     // Get address from config (config already loaded above)

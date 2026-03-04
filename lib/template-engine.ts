@@ -1,7 +1,5 @@
 import { readFile } from "fs/promises";
 import { join } from "path";
-import { format } from "date-fns";
-import { fr } from "date-fns/locale";
 import { Submission } from "@prisma/client";
 import { existsSync } from "fs";
 import { lightenColor } from "@/lib/utils";
@@ -161,13 +159,6 @@ async function processFonts(html: string): Promise<string> {
   return html;
 }
 
-// Format date based on config
-function formatDate(field: TemplateField, date: Date): string {
-  const formatStr = field.format || "EEEE, MMMM d";
-  const locale = field.locale === "fr" ? fr : undefined;
-  return format(date, formatStr, locale ? { locale } : undefined);
-}
-
 // Format time based on config
 function formatTime(field: TemplateField, time24: string): string {
   const prefix = field.prefix || "";
@@ -199,22 +190,8 @@ function replaceField(
 
   // Format value based on field type
   if (field.type === "date") {
-    if (!value) {
-      // If date is missing, return empty string or placeholder
-      return html; // Don't replace if value is missing
-    }
-    try {
-      const dateValue = value instanceof Date ? value : new Date(value);
-      if (isNaN(dateValue.getTime())) {
-        // Invalid date, don't replace
-        console.warn(`Invalid date value for field ${field.name}: ${value}`);
-        return html;
-      }
-      replacementValue = formatDate(field, dateValue);
-    } catch (error) {
-      console.error(`Error formatting date for field ${field.name}:`, error);
-      return html; // Don't replace if date formatting fails
-    }
+    // Date is entered manually as text; use as-is
+    replacementValue = value != null ? String(value) : "";
   } else if (field.type === "time") {
     if (!value) {
       return html; // Don't replace if value is missing
@@ -507,7 +484,7 @@ export async function renderTemplateWithConfig(submission: Submission): Promise<
             if (value === undefined || value === null) {
               const fromFields = dynamicFields[field.name];
               if (fromFields !== undefined && fromFields !== null) {
-                value = field.type === "date" && fromFields ? new Date(fromFields) : fromFields;
+                value = fromFields;
               }
             }
             if (process.env.NODE_ENV === "development" && (field.type === "text" || field.type === "date" || field.type === "time")) {

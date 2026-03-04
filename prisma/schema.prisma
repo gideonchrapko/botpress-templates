@@ -70,7 +70,7 @@ model Submission {
   venueName       String
   addressLine     String
   cityLine        String
-  eventDate       DateTime
+  eventDate       String   // Manual date text, e.g. "November 20, 2024"
   doorTime        String   @default("18:00") // Time in HH:MM format (24-hour), default 6:00 PM
   people          String   // JSON array of people
   uploadUrls      String   // JSON array of upload URLs

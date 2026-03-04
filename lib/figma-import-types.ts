@@ -20,6 +20,13 @@ export interface FigmaExportNode {
     fontWeight?: number;
     textAlign?: "LEFT" | "CENTER" | "RIGHT";
     fill?: string; // Hex color
+    letterSpacing?: number; // px, from Figma
+    /** Line height in pixels (preferred). Use when Figma line height unit is PIXELS. */
+    lineHeightPx?: number;
+    /** Figma line height unit: PIXELS, PERCENT, or AUTO. */
+    lineHeightUnit?: "PIXELS" | "PERCENT" | "AUTO";
+    /** When unit is PERCENT, value is e.g. 150 for 150%. When PIXELS, value is the px. */
+    lineHeightValue?: number;
   };
   
   // Image/vector properties
